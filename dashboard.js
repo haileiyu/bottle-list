@@ -4,11 +4,11 @@ let data = await state(), filter = 'watching';
 const message = text => {$('#message').textContent = text;};
 async function act(action) {const result = await mutate(action); data = await state(); render(); if(result.notificationFailed) message('Saved. The system notification was not sent; check the list for threshold alerts.');}
 function button(text, handler, className = '') {const b = el('button', text, className); b.type = 'button'; b.onclick = async () => {try {await handler();} catch(e) {message(e.message);}}; return b;}
-function stat(label, value, caption) {const box = el('div', null, 'stat'); box.append(el('span', label, 'muted'), el('strong', value), el('small', caption, 'muted')); return box;}
+function stat(label, value) {const box = el('div', null, 'stat'); box.append(el('span', label, 'muted'), el('strong', value)); return box;}
 function render() {
   const ids = Object.keys(data.merchants), active = data.wines.filter(w => w.status === 'watching');
   const ready = ids.filter(id => totals(data, id).ready);
-  $('#stats').replaceChildren(stat('Wines to buy', String(active.length).padStart(2,'0'), 'Saved across merchants, in one place'), stat('Merchants', String(new Set(active.map(w=>w.merchant)).size).padStart(2,'0'), 'Totals tracked per merchant'), stat('Thresholds reached', String(ready.length).padStart(2,'0'), ready.length ? 'Time to review your orders' : 'Good wine is worth the wait'));
+  $('#stats').replaceChildren(stat('Wines to buy', String(active.length).padStart(2,'0')), stat('Merchants', String(new Set(active.map(w=>w.merchant)).size).padStart(2,'0')), stat('Thresholds reached', String(ready.length).padStart(2,'0')));
   const container = $('#merchants'); container.replaceChildren();
   const term = $('#search').value.trim().toLowerCase();
   ids.sort((a,b) => Number(totals(data,b).ready) - Number(totals(data,a).ready));
@@ -48,7 +48,7 @@ function render() {
     }
     table.append(tbody); wrap.append(table); card.append(wrap); container.append(card);
   }
-  if(!container.childElementCount) {const empty=el('div',null,'empty'); empty.append(el('h2',filter==='ready'?'No merchant has reached its threshold yet':term?'No matching wines':filter==='purchased'?'No purchases yet':'Your next great bottle starts here.'),el('p','Open a merchant\'s product page and click the Wine Queue icon in your browser to save it, or add one manually.','muted'),button('+ Add wine',()=>editWine(), 'primary')); container.append(empty);}
+  if(!container.childElementCount) {const empty=el('div',null,'empty'); empty.append(el('h2',filter==='ready'?'No merchant has reached its threshold yet':term?'No matching wines':filter==='purchased'?'No purchases yet':'No wines saved yet'),el('p','Open a merchant\'s product page and click the Wine Queue icon in your browser to save it, or add one manually.','muted'),button('+ Add wine',()=>editWine(), 'primary')); container.append(empty);}
 }
 function openDialog(title) {$('#dialog-title').textContent=title; $('#edit-form').replaceChildren(); $('#dialog-error').textContent=''; $('#dialog-save').disabled=false; $('#dialog').showModal(); return $('#edit-form');}
 function submitDialog(form, handler) {form.onsubmit=async event=>{event.preventDefault();$('#dialog-save').disabled=true;try {await handler();$('#dialog').close();}catch(e){$('#dialog-error').textContent=e.message;}finally{$('#dialog-save').disabled=false;}};}

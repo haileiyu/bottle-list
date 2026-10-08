@@ -42,11 +42,8 @@ body:not(.popup)::before{content:"";display:block;height:8px;background:var(--ol
 .brand{display:flex;align-items:center;gap:14px;font:500 17px/1 var(--caps);letter-spacing:5px;color:var(--ink);text-decoration:none}
 .brand img{width:30px;height:30px}
 .actions{display:flex;align-items:center;gap:10px}
-.intro{display:flex;align-items:center;justify-content:space-between;gap:40px;padding:56px 0 36px}
+.intro{padding:48px 0 28px}
 .eyebrow{display:block;color:var(--muted);font:600 11px/1.4 var(--caps);letter-spacing:2.6px;text-transform:uppercase;margin-bottom:16px}
-.intro p{font-size:15px;max-width:560px}
-.vintage-mark{font:italic 400 54px/1 var(--serif);color:var(--olive);text-align:center;margin-right:16px;padding:22px 26px;border:1px solid var(--line)}
-.vintage-mark span{display:block;font:600 10px/1.4 var(--caps);letter-spacing:2.6px;text-transform:uppercase;color:var(--muted);font-style:normal;margin-top:12px}
 
 .stats{display:grid;grid-template-columns:repeat(3,1fr);background:var(--cream);border:1px solid var(--line);padding:28px 0}
 .stat{display:flex;flex-direction:column;padding:0 32px;border-right:1px solid var(--line)}
@@ -139,11 +136,9 @@ dialog::backdrop{background:#1d252d73}
   .brand{letter-spacing:3px;font-size:14px}
   .intro{padding-top:36px}
   h1{font-size:28px}
-  .vintage-mark{display:none}
   .toolbar{flex-wrap:wrap}
   .filters{margin-left:0}
   .toolbar input{max-width:none}
   .merchant-head{flex-wrap:wrap}
   .stat{padding:0 16px}
-  .stat small{font-size:10px}
 }
