@@ -49,6 +49,6 @@ test('Import merges a backup without duplicating wines or overwriting settings',
  let merged=applyOperation(state,{type:'import',state:JSON.parse(JSON.stringify(backup))});
  assert.equal(merged.wines.length,2);assert.equal(merged.merchants['example.com'].thresholdCents,30000);assert.equal(merged.wines[1].updatedAt,backup.wines[0].updatedAt);
  assert.deepEqual(applyOperation(merged,{type:'import',state:backup}),merged);
- assert.throws(()=>applyOperation(state,{type:'import',state:{foo:1}}),/not a Wine Queue backup/);
+ assert.throws(()=>applyOperation(state,{type:'import',state:{foo:1}}),/not a Bottle List backup/);
  const bad={...backup,wines:[{...backup.wines[0],id:'bad',url:'https://example.com/?q='+'a'.repeat(2000)},...backup.wines]};assert.equal(applyOperation(state,{type:'import',state:bad}).wines.length,2);
 });

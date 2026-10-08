@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Wine Queue · Wine Wish List",
+  "name": "Bottle List",
   "version": "0.1.0",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtOgs3QdKoetxl0P37EjVzKBdTQW6MNXgQiIRTEt5G4J+oqoM2r0nv1tGZK++xDjH1HR+DHs58pwFGL9cjJVx8ZdMA+6NJW2D7Qp1NrGijvE3zQBuCxOUQl210lz+V6is/f7xtCLLopWci9HDJALq4Rgo1fpt/hdtyJUH7dX4+tIegAjPI+65Y8GhMtcyFMwSD+WoV8qZCkGWeP33oihNdLWpZBIZofXUcpcE4nw977WnqoNSMOfXdMqZm1FYxf/aYhOSNRwaQ2CYBPydplM3lTEtG2IUzH/vBHfU5H5G7dv5vvOFEtQC0RVlqehOXZxBvWAQxrgFH0+CUz1D8tpdbQIDAQAB",
   "description": "Save wines in one click, organize your wish list by merchant, and get alerted when you reach a free-shipping threshold you set.",
   "permissions": ["activeTab", "scripting", "storage", "notifications"],
   "background": {"service_worker": "background.js", "type": "module"},
-  "action": {"default_popup": "popup.html", "default_title": "Save this wine", "default_icon": "icons/icon128.png"},
+  "action": {"default_popup": "popup.html", "default_title": "Save this wine", "default_icon": {"16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png"}},
   "icons": {"16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png"}
 }

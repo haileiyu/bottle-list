@@ -68,7 +68,7 @@ export function applyOperation(state, action) {
   } else if (action.type === 'deleteWine') next.wines = next.wines.filter(w => w.id !== action.id);
   else if (action.type === 'import') {
     const backup = action.state;
-    if (!Array.isArray(backup?.wines) || typeof backup.merchants !== 'object' || backup.merchants === null) throw new Error('This file is not a Wine Queue backup');
+    if (!Array.isArray(backup?.wines) || typeof backup.merchants !== 'object' || backup.merchants === null) throw new Error('This file is not a Bottle List backup');
     for (const w of backup.wines) {
       if (next.wines.some(existing => existing.id === w.id)) continue;
       let wine;

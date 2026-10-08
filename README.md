@@ -1,22 +1,22 @@
-# Wine Queue · Wine Wish List
+# Bottle List
 
 Chrome extension v0.1.0. Save wines from different merchants, total up what you plan to buy per merchant, and get alerted when you reach a free-shipping threshold you set.
 
 ## Installation (Mac / Windows)
 
-1. Unzip `wine-queue-v0.1.0.zip` and keep the `wine-cart` folder. Do not move or delete it after installing.
+1. Download or clone this repository and keep the `bottle-list` folder. Do not move or delete it after installing.
 2. Type `chrome://extensions` in the Chrome address bar.
 3. Turn on "Developer mode" in the top right corner.
-4. Click "Load unpacked" and select the `wine-cart` folder that contains `manifest.json`.
-5. Pin Wine Queue to the toolbar from the browser's puzzle-piece icon.
+4. Click "Load unpacked" and select the `bottle-list` folder that contains `manifest.json`.
+5. Pin Bottle List to the toolbar from the browser's puzzle-piece icon.
 
 This package is an inspectable, personal-use build and has not been published to the Chrome Web Store. Loading an unpacked extension is Chrome's officially supported way to install for personal development: https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked
 
 ## Your new workflow
 
-1. Find a cheap wine → open the **specific product page** → click the Wine Queue icon.
+1. Find a cheap wine → open the **specific product page** → click the Bottle List icon.
 2. The extension tries to read the wine name, vintage, size, price, currency and stock. Check the vintage and size, enter how many you want, and save. The price may be per case, so enter the quantity in the unit the page sells.
-3. Click "Find this wine on CellarTracker", confirm it is the same wine and vintage, and enter the **community average score** and that wine's CT link. Do not enter critic scores from RP / WA / JS / Vinous.
+3. Click "Find prices on Wine-Searcher" to compare the price with other shops (the list has a "Find price" link under each price too). Click "Find this wine on CellarTracker", confirm it is the same wine and vintage, and enter the **community average score** and that wine's CT link. Do not enter critic scores from RP / WA / JS / Vinous.
 4. Open "My list" → click "Shipping settings" for that merchant, e.g. USD 300 before tax. The threshold starts empty; the extension does not assume every shop offers free shipping over $300.
 5. Keep saving. The list shows each shop's subtotal, the amount left to reach the threshold, CT scores and product links. You can edit quantities directly in the table.
 6. When a merchant goes from below to at or above its threshold, the extension sends a system notification and shows the number of merchants that reached their thresholds on the icon badge; the list also shows a green status. If notifications are disabled in macOS / Chrome, you can still check the list and the icon.
@@ -33,7 +33,7 @@ Example: at one shop, $95 × 2 + $115 × 1 = $305; with a $300 threshold it show
 - A threshold is reached when the total is **greater than or equal to** the amount you set. Tax is excluded, currencies are not converted, and promo codes are not applied automatically. Memberships, New York State shipping coverage, promotion exclusions, bottle-count thresholds and the like must be checked manually; you can write them in the merchant notes. Only the amount threshold is calculated automatically.
 - **The first version does not check prices in the background, monitor stock, compare prices across the web, or search for cheap wine automatically.** Prices and stock are snapshots from when you saved them. Reopen the same product link and click the extension to update the existing entry (quantity and CT fields are kept), or edit it manually in the list.
 - **CT community scores are entered manually for now**, with a CT search shortcut and a source link. The extension does not use unverified merchant scores, does not automatically match vintages across sites, and does not bypass login restrictions. The CT link is for checking the source later and does not mean the extension has verified the score.
-- New wines default to USD. When the currency cannot be detected, the interface asks you to confirm it.
+- New wines default to USD when the page does not show a currency; check the Currency field before saving.
 - All wines to buy from one merchant make up one projected order. Purchased entries are not counted; the same wine saved at two shops counts toward each shop's projected order separately.
 - CSV export is suited for further work in Excel / Numbers. "Export backup" saves all wines and merchant settings as JSON; "Import backup" adds them back, skipping wines already in the list and keeping existing merchant settings.
 
