@@ -2,7 +2,7 @@ import {emptyState} from './core.mjs';
 export const $ = selector => document.querySelector(selector);
 export const state = async () => (await chrome.storage.local.get('state')).state || emptyState();
 export async function mutate(action) {
-  const result = await chrome.runtime.sendMessage({channel: 'wine-queue', action});
+  const result = await chrome.runtime.sendMessage({channel: 'bottle-list', action});
   if (!result?.ok) throw new Error(result?.error || 'Save failed; reopen the extension');
   return result;
 }
@@ -16,6 +16,11 @@ export function link(text, url, className) {
   const a = element('a', text, className); a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer'; return a;
 }
 export function ctSearch(name) {return 'https://www.cellartracker.com/list.asp?Table=List&iUserOverride=0&szSearch=' + encodeURIComponent(name);}
+export function wsSearch(name, vintage = '') {
+  const words = String(name).trim().split(/\s+/).filter(Boolean).map(encodeURIComponent).join('+');
+  if (!words) return 'https://www.wine-searcher.com/';
+  return 'https://www.wine-searcher.com/find/' + words + (/^\d{4}$/.test(String(vintage).trim()) ? '/' + String(vintage).trim() : '');
+}
 export function formData(form) {
   const data = Object.fromEntries(new FormData(form));
   data.eligible = form.elements.eligible.checked;
@@ -54,8 +59,11 @@ export function wineFields(form, wine = {}) {
   const check = element('label', null, 'checkbox'); const input = element('input'); input.type = 'checkbox'; input.name = 'eligible'; input.checked = wine.eligible !== false;
   check.append(input, document.createTextNode('Count this wine toward free shipping')); form.append(check);
   const hint = element('p', 'Check the wine name and vintage before entering a CT score. Wines with unknown price, no stock or a mismatched currency do not count toward the threshold.', 'muted tiny'); form.append(hint);
-  form.append(link('Find this wine on CellarTracker →', ctSearch(wine.name || ''), 'ct-search'));
-  form.elements.name.addEventListener('input', () => {form.querySelector('.ct-search').href = ctSearch(form.elements.name.value);});
+  const lookups = element('div', null, 'lookups');
+  lookups.append(link('Find this wine on CellarTracker →', ctSearch(wine.name || ''), 'ct-search'), link('Find prices on Wine-Searcher →', wsSearch(wine.name || '', wine.vintage || ''), 'ws-search'));
+  form.append(lookups);
+  const refresh = () => {form.querySelector('.ct-search').href = ctSearch(form.elements.name.value); form.querySelector('.ws-search').href = wsSearch(form.elements.name.value, form.elements.vintage.value);};
+  form.elements.name.addEventListener('input', refresh); form.elements.vintage.addEventListener('input', refresh);
 }
 export function download(filename, data, type) {
   const url = URL.createObjectURL(new Blob([data], {type}));

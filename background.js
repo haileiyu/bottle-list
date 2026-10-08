@@ -6,7 +6,7 @@ async function badge(state) {
   await chrome.action.setBadgeBackgroundColor({color: '#316349'});
 }
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
-  if (sender.id !== chrome.runtime.id || message?.channel !== 'wine-queue') return;
+  if (sender.id !== chrome.runtime.id || message?.channel !== 'bottle-list') return;
   queue = queue.catch(() => {}).then(async () => {
     const state = (await chrome.storage.local.get('state')).state || emptyState();
     const next = applyOperation(state, message.action);

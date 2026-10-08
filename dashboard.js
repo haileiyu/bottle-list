@@ -1,5 +1,5 @@
 import {totals, money} from './core.mjs';
-import {$, state, mutate, element as el, link, ctSearch, wineFields, formData, download} from './shared.js';
+import {$, state, mutate, element as el, link, ctSearch, wsSearch, wineFields, formData, download} from './shared.js';
 let data = await state(), filter = 'watching';
 const message = text => {$('#message').textContent = text;};
 async function act(action) {const result = await mutate(action); data = await state(); render(); if(result.notificationFailed) message('Saved. The system notification was not sent; check the list for threshold alerts.');}
@@ -42,13 +42,14 @@ function render() {
       input.onchange = async()=>{if(!input.reportValidity())return; input.disabled=true; try {await act({type:'saveWine',wine:{...w,price:w.priceCents == null?'':w.priceCents/100,quantity:input.value}});}catch(e){message(e.message);input.value=w.quantity;input.disabled=false;}}; qty.append(input);
       const score = el('td'); score.append(link(w.ctScore == null ? 'Find score ↗' : w.ctScore.toFixed(1),w.ctUrl || ctSearch(w.name + ' ' + w.vintage),w.ctScore == null ? 'tiny' : 'score'));
       if(w.ctScore!=null) score.append(el('small',w.ctUrl?'Manual · Source ↗':'Manual · No source','muted tiny'));
+      const price = el('td'), findPrice = el('small'); findPrice.append(link('Find price ↗',wsSearch(w.name,w.vintage),'tiny')); price.append(money(w.priceCents,w.currency),findPrice);
       const status = el('td'); status.append(el('span',w.status==='purchased'?'Purchased':w.availability==='out'?'Out of stock':!w.eligible?'Not counted':w.priceCents==null?'Price needed':w.currency!==m.currency?'Currency mismatch':w.availability==='unknown'?'Stock unverified':'To buy','status'),el('small',new Date(w.updatedAt).toLocaleDateString('en-US'),'muted'));
       const actions = el('td',null,'row-actions'); actions.append(button('Edit',()=>editWine(w),'text-button'),button(w.status==='purchased'?'Restore':'Bought',()=>act({type:'status',id:w.id,status:w.status==='purchased'?'watching':'purchased'}),'text-button'),button('Delete',()=>{if(confirm(`Delete "${w.name}" from the list?`))return act({type:'deleteWine',id:w.id});},'text-button muted'));
-      row.append(name,el('td',money(w.priceCents,w.currency)),qty,el('td',money(w.priceCents==null?null:w.priceCents*w.quantity,w.currency)),score,status,actions); tbody.append(row);
+      row.append(name,price,qty,el('td',money(w.priceCents==null?null:w.priceCents*w.quantity,w.currency)),score,status,actions); tbody.append(row);
     }
     table.append(tbody); wrap.append(table); card.append(wrap); container.append(card);
   }
-  if(!container.childElementCount) {const empty=el('div',null,'empty'); empty.append(el('h2',filter==='ready'?'No merchant has reached its threshold yet':term?'No matching wines':filter==='purchased'?'No purchases yet':'No wines saved yet'),el('p','Open a merchant\'s product page and click the Wine Queue icon in your browser to save it, or add one manually.','muted'),button('+ Add wine',()=>editWine(), 'primary')); container.append(empty);}
+  if(!container.childElementCount) {const empty=el('div',null,'empty'); empty.append(el('h2',filter==='ready'?'No merchant has reached its threshold yet':term?'No matching wines':filter==='purchased'?'No purchases yet':'No wines saved yet'),el('p','Open a merchant\'s product page and click the Bottle List icon in your browser to save it, or add one manually.','muted'),button('+ Add wine',()=>editWine(), 'primary')); container.append(empty);}
 }
 function openDialog(title) {$('#dialog-title').textContent=title; $('#edit-form').replaceChildren(); $('#dialog-error').textContent=''; $('#dialog-save').disabled=false; $('#dialog').showModal(); return $('#edit-form');}
 function submitDialog(form, handler) {form.onsubmit=async event=>{event.preventDefault();$('#dialog-save').disabled=true;try {await handler();$('#dialog').close();}catch(e){$('#dialog-error').textContent=e.message;}finally{$('#dialog-save').disabled=false;}};}
@@ -65,11 +66,11 @@ $('#close').onclick=()=>$('#dialog').close();
 $('#add').onclick=()=>editWine();
 $('#search').oninput=render;$('#sort').onchange=render;
 for(const button of document.querySelectorAll('[data-filter]'))button.onclick=()=>{filter=button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===button));render();};
-$('#backup').onclick=()=>download('wine-queue-backup.json',JSON.stringify(data,null,2),'application/json');
+$('#backup').onclick=()=>download('bottle-list-backup.json',JSON.stringify(data,null,2),'application/json');
 $('#export').onclick=()=>{
   const rows=[['Merchant','URL','Wine','Vintage','Size','Unit price','Currency','Quantity','CT community score','CT link','Stock','Counts toward threshold','Status','Updated','Notes'],...data.wines.map(w=>[data.merchants[w.merchant].name,w.url,w.name,w.vintage,w.size,w.priceCents==null?'':w.priceCents/100,w.currency,w.quantity,w.ctScore??'',w.ctUrl,w.availability,w.eligible,w.status,w.updatedAt,w.notes])];
   const quote=value=>'"'+String(value).replace(/^[=+@\-\t\r]/,s=>"'"+s).replace(/"/g,'""')+'"';
-  download('wine-queue.csv','\ufeff'+rows.map(row=>row.map(quote).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+  download('bottle-list.csv','\ufeff'+rows.map(row=>row.map(quote).join(',')).join('\r\n'),'text/csv;charset=utf-8');
 };
 chrome.storage.onChanged.addListener(async(changes,area)=>{if(area==='local'&&changes.state){data=await state();render();}});
 render();
