@@ -1,62 +1,62 @@
-# Wine Queue · 买酒清单
+# Wine Queue · Wine Wish List
 
-Chrome 插件 v0.1.0。收藏不同酒商的酒款，按酒商累计待购金额，达到你设定的免运费门槛时提醒。
+Chrome extension v0.1.0. Save wines from different merchants, total up what you plan to buy per merchant, and get alerted when you reach a free-shipping threshold you set.
 
-## 安装（Mac / Windows）
+## Installation (Mac / Windows)
 
-1. 解压 `wine-queue-v0.1.0.zip`，保留 `wine-cart` 文件夹，不要在安装后移动或删除。
-2. 在 Chrome 地址栏输入 `chrome://extensions`。
-3. 打开右上角「开发者模式」。
-4. 点击「加载已解压的扩展程序 / Load unpacked」，选择里面含有 `manifest.json` 的 `wine-cart` 文件夹。
-5. 在浏览器拼图图标中将 Wine Queue 固定到工具栏。
+1. Unzip `wine-queue-v0.1.0.zip` and keep the `wine-cart` folder. Do not move or delete it after installing.
+2. Type `chrome://extensions` in the Chrome address bar.
+3. Turn on "Developer mode" in the top right corner.
+4. Click "Load unpacked" and select the `wine-cart` folder that contains `manifest.json`.
+5. Pin Wine Queue to the toolbar from the browser's puzzle-piece icon.
 
-本包是可检查源码的个人使用版本，尚未发布到 Chrome Web Store。加载解压版是 Chrome 官方支持的个人开发安装方式：https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked
+This package is an inspectable, personal-use build and has not been published to the Chrome Web Store. Loading an unpacked extension is Chrome's officially supported way to install for personal development: https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked
 
-## 你的新工作流
+## Your new workflow
 
-1. 发现便宜的酒 → 打开**具体商品详情页** → 点 Wine Queue 图标。
-2. 插件尝试读出酒名、年份、规格、价格、币种和库存。核对当前年份与规格，填写想买的数量后保存。价格可能是整箱价，数量应按页面售卖单位填写。
-3. 点击「查找这款酒的 CellarTracker」，核对同一酒款、同一年份，将**社区平均分**及该酒款的 CT 链接填入。不要填写酒评家的 RP / WA / JS / Vinous 分数。
-4. 打开「我的清单」→ 对该酒商点「运费设置」，例如税前 USD 300。门槛初始为空，不会猜测每家店都满 $300 免运费。
-5. 继续收藏。清单会展示各家店的小计、距离门槛的差额、CT 分数和商品链接。数量可直接在表格修改。
-6. 从未达标变为达标时，插件会发送系统通知，并在图标显示已达标酒商数；清单也会显示绿色状态。若 macOS / Chrome 禁用了通知，清单和图标仍可查看。
-7. 下单后点击「已买」移入已购买记录；误点可恢复。金额低于门槛后，下一次重新达标会再次提醒。
+1. Find a cheap wine → open the **specific product page** → click the Wine Queue icon.
+2. The extension tries to read the wine name, vintage, size, price, currency and stock. Check the vintage and size, enter how many you want, and save. The price may be per case, so enter the quantity in the unit the page sells.
+3. Click "Find this wine on CellarTracker", confirm it is the same wine and vintage, and enter the **community average score** and that wine's CT link. Do not enter critic scores from RP / WA / JS / Vinous.
+4. Open "My list" → click "Shipping settings" for that merchant, e.g. USD 300 before tax. The threshold starts empty; the extension does not assume every shop offers free shipping over $300.
+5. Keep saving. The list shows each shop's subtotal, the amount left to reach the threshold, CT scores and product links. You can edit quantities directly in the table.
+6. When a merchant goes from below to at or above its threshold, the extension sends a system notification and shows the number of merchants that reached their thresholds on the icon badge; the list also shows a green status. If notifications are disabled in macOS / Chrome, you can still check the list and the icon.
+7. After ordering, click "Bought" to move the wine to your purchase history; click "Restore" if you did it by mistake. If the total drops below the threshold, you will be alerted again the next time it is reached.
 
-例如：同一家店，$95 × 2 + $115 × 1 = $305；设置门槛 $300 后会显示已达标。另一家店的收藏不会与其合并。
+Example: at one shop, $95 × 2 + $115 × 1 = $305; with a $300 threshold it shows as reached. Wines saved from another shop are not combined with it.
 
-## 当前支持与边界
+## Current support and limitations
 
-- 自动提取依赖商品页的 Product JSON-LD 或商品价格 meta 标签。页面没有可靠标记、出现多个规格且无法匹配当前规格、或仅有最低价时，会要求手动填写价格。
-- 保存前请核对折扣、年份、规格、币种及库存。网页元数据不一定与当前选中的变体完全一致。
-- 酒商以域名分组，`www` 与非 `www` 会合并；其他子域名、不同域名不自动合并。
-- 金额使用整数分计算。缺货、未填价格、币种与酒商设置不符、或取消「计入免运费金额」的酒款不计入。库存未知但价格有效的酒款会计入，同时标注待核实。
-- 门槛按设置金额的 **大于等于** 判断。不含税、不自动兑换币种、不自动应用优惠码。会员、纽约州寄送范围、促销排除、瓶数门槛等需手动核对；可写在酒商备注里。只有金额门槛自动计算。
-- **第一版不做后台查价、缺货监控、全网比价或自动搜索便宜酒。** 价格与库存是收藏时的快照。重新打开同一个商品链接，点击插件可更新原记录（保留数量和 CT 字段）；也可以在清单里手动编辑。
-- **CT 社区分暂时手动填写**，附有 CT 搜索入口与来源链接；不使用未经核对的酒商评分，不自动跨网站匹配年份或绕过登录限制。CT 链接用于回看来源，不表示插件已验证该分数。
-- 新增酒款默认 USD。无法识别币种时，界面会提醒确认。
-- 同一酒商的所有待购条目构成一个预计订单。买过的记录不计入；同一款酒在两家店收藏，会分别计入各自预计订单。
-- CSV 导出适合在 Excel / Numbers 继续整理。JSON 导出包含全部酒款和酒商配置，用于保留原始数据；本版本尚无导入界面。
+- Automatic extraction relies on the product page's Product JSON-LD or product price meta tags. If the page has no reliable markup, lists several sizes that cannot be matched to the selected one, or only shows a lowest price, you will be asked to enter the price manually.
+- Check discounts, vintage, size, currency and stock before saving. Page metadata may not exactly match the currently selected variant.
+- Merchants are grouped by domain. `www` and non-`www` are merged; other subdomains and different domains are not merged automatically.
+- Amounts are calculated in integer cents. Wines that are out of stock, have no price, use a currency different from the merchant setting, or have "Count this wine toward free shipping" unchecked are not counted. Wines with unknown stock but a valid price are counted and flagged as unverified.
+- A threshold is reached when the total is **greater than or equal to** the amount you set. Tax is excluded, currencies are not converted, and promo codes are not applied automatically. Memberships, New York State shipping coverage, promotion exclusions, bottle-count thresholds and the like must be checked manually; you can write them in the merchant notes. Only the amount threshold is calculated automatically.
+- **The first version does not check prices in the background, monitor stock, compare prices across the web, or search for cheap wine automatically.** Prices and stock are snapshots from when you saved them. Reopen the same product link and click the extension to update the existing entry (quantity and CT fields are kept), or edit it manually in the list.
+- **CT community scores are entered manually for now**, with a CT search shortcut and a source link. The extension does not use unverified merchant scores, does not automatically match vintages across sites, and does not bypass login restrictions. The CT link is for checking the source later and does not mean the extension has verified the score.
+- New wines default to USD. When the currency cannot be detected, the interface asks you to confirm it.
+- All wines to buy from one merchant make up one projected order. Purchased entries are not counted; the same wine saved at two shops counts toward each shop's projected order separately.
+- CSV export is suited for further work in Excel / Numbers. JSON export includes all wines and merchant settings to preserve the raw data; this version has no import screen yet.
 
-## 数据与权限
+## Data and permissions
 
-数据保存在当前 Chrome 配置的 `chrome.storage.local`，不上传到服务器、不跨设备同步、无账号、无追踪。删除插件或清理扩展数据会清空记录，请先导出。
+Data is stored in `chrome.storage.local` for the current Chrome profile. It is not uploaded to any server or synced across devices, and there is no account and no tracking. Removing the extension or clearing extension data erases your records, so export them first.
 
-- `activeTab` + `scripting`：你点击插件时读取当前页的商品标记。没有永久读取所有网站的权限。
-- `storage`：保存酒款和酒商配置。
-- `notifications`：达到设置门槛时发通知。
+- `activeTab` + `scripting`: reads product markup on the current page when you click the extension. There is no permanent permission to read every site.
+- `storage`: stores wines and merchant settings.
+- `notifications`: sends a notification when a threshold you set is reached.
 
-插件不自动购买、不操作真实购物车、不存储付款信息、不替你登录网站。
+The extension does not buy anything automatically, does not touch real shopping carts, does not store payment details, and does not sign in to sites for you.
 
-## 开发
+## Development
 
-原生 JavaScript / CSS、Manifest V3，无安装依赖，无构建步骤。编辑后在扩展管理页点刷新。
+Plain JavaScript / CSS, Manifest V3, no dependencies to install, no build step. After editing, click reload on the extensions page.
 
-- `core.mjs`：金额、分组、数据校验、门槛状态。
-- `background.js`：串行保存，通知，图标徽标。
-- `extract.js`：当前页商品信息读取。
-- `popup.*`：收藏与更新入口。
-- `dashboard.*`：清单、编辑、筛选、导出。
+- `core.mjs`: amounts, grouping, data validation, threshold status.
+- `background.js`: serialized saves, notifications, icon badge.
+- `extract.js`: reads product info from the current page.
+- `popup.*`: save and update entry point.
+- `dashboard.*`: list, editing, filtering, export.
 
-运行 `node --test tests/*.test.mjs`：11 项测试通过，覆盖金额累计、币种隔离、门槛通知状态、重复条目以及页面元数据提取。JavaScript 语法检查通过。
+Run `node --test tests/*.test.mjs`: 11 tests pass, covering amount totals, currency separation, threshold notification state, duplicate entries and page metadata extraction. JavaScript syntax checks pass.
 
-尚未完成真实 Chrome 的安装、界面和操作系统通知测试，也未逐一验证具体酒商网站；当前环境无法下载测试浏览器。建议安装后先收藏一两条商品，手动核对价格，再把该酒商门槛调到当前金额以检查通知。测试结束后恢复真实门槛。
+Installation, UI and operating-system notification testing in a real Chrome has not been done yet, and individual merchant sites have not been verified one by one; the current environment cannot download a test browser. After installing, save one or two products first, check the prices manually, then set that merchant's threshold to the current total to test the notification. Restore the real threshold when you are done.

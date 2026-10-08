@@ -3,7 +3,7 @@ export const $ = selector => document.querySelector(selector);
 export const state = async () => (await chrome.storage.local.get('state')).state || emptyState();
 export async function mutate(action) {
   const result = await chrome.runtime.sendMessage({channel: 'wine-queue', action});
-  if (!result?.ok) throw new Error(result?.error || '保存失败，请重新打开插件');
+  if (!result?.ok) throw new Error(result?.error || 'Save failed; reopen the extension');
   return result;
 }
 export function element(tag, text, className) {
@@ -23,13 +23,13 @@ export function formData(form) {
 }
 export function wineFields(form, wine = {}) {
   const fields = [
-    ['name', '酒名', 'text', true], ['url', '商品链接', 'url', true],
-    ['vintage', '年份 / NV', 'text'], ['size', '规格（单瓶或整箱）', 'text'],
-    ['price', '单件价格', 'number'], ['quantity', '数量（按上述规格）', 'number', true],
-    ['currency', '币种', ['USD','EUR','GBP','CAD','HKD','JPY','AUD']],
-    ['availability', '库存', [['unknown','待核实'],['in','有货'],['out','缺货']]],
-    ['ctScore', 'CellarTracker 社区分', 'number'], ['ctUrl', 'CellarTracker 来源链接', 'url'],
-    ['notes', '备注 · 目标价 / 优惠码', 'text']
+    ['name', 'Wine name', 'text', true], ['url', 'Product link', 'url', true],
+    ['vintage', 'Vintage / NV', 'text'], ['size', 'Size (bottle or case)', 'text'],
+    ['price', 'Unit price', 'number'], ['quantity', 'Quantity (in the size above)', 'number', true],
+    ['currency', 'Currency', ['USD','EUR','GBP','CAD','HKD','JPY','AUD']],
+    ['availability', 'Stock', [['unknown','Unverified'],['in','In stock'],['out','Out of stock']]],
+    ['ctScore', 'CellarTracker community score', 'number'], ['ctUrl', 'CellarTracker source link', 'url'],
+    ['notes', 'Notes · Target price / promo code', 'text']
   ];
   const grid = element('div', null, 'form-grid');
   for (const [name, title, type, required] of fields) {
@@ -46,15 +46,15 @@ export function wineFields(form, wine = {}) {
     else if (name === 'currency') input.value = wine.currency || 'USD';
     else if (name === 'availability') input.value = wine.availability || 'unknown';
     else input.value = wine[name] ?? '';
-    if (name === 'size') input.placeholder = '例如 750 ml / 6 × 750 ml';
-    if (name === 'ctScore') input.placeholder = '手动填入，未知留空';
+    if (name === 'size') input.placeholder = 'e.g. 750 ml / 6 × 750 ml';
+    if (name === 'ctScore') input.placeholder = 'Enter manually; leave blank if unknown';
     label.append(input); grid.append(label);
   }
   form.append(grid);
   const check = element('label', null, 'checkbox'); const input = element('input'); input.type = 'checkbox'; input.name = 'eligible'; input.checked = wine.eligible !== false;
-  check.append(input, document.createTextNode('这款酒计入免运费金额')); form.append(check);
-  const hint = element('p', 'CT 分数请核对酒名与年份后填写。未知价格、缺货或币种不符的酒不计入门槛。', 'muted tiny'); form.append(hint);
-  form.append(link('查找这款酒的 CellarTracker →', ctSearch(wine.name || ''), 'ct-search'));
+  check.append(input, document.createTextNode('Count this wine toward free shipping')); form.append(check);
+  const hint = element('p', 'Check the wine name and vintage before entering a CT score. Wines with unknown price, no stock or a mismatched currency do not count toward the threshold.', 'muted tiny'); form.append(hint);
+  form.append(link('Find this wine on CellarTracker →', ctSearch(wine.name || ''), 'ct-search'));
   form.elements.name.addEventListener('input', () => {form.querySelector('.ct-search').href = ctSearch(form.elements.name.value);});
 }
 export function download(filename, data, type) {

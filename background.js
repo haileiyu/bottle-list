@@ -17,8 +17,8 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
     for (const event of events) {
       try {
         await chrome.notifications.create('merchant:' + event.id, {
-          type: 'basic', iconUrl: 'icons/icon128.png', title: `${event.name} · 已达设定门槛`,
-          message: `${event.bottles} 件，共 ${money(event.subtotal, event.currency)}。下单前请核实库存、折扣及寄送条件。`
+          type: 'basic', iconUrl: 'icons/icon128.png', title: `${event.name} · Threshold reached`,
+          message: `${event.bottles} item(s), ${money(event.subtotal, event.currency)} total. Check stock, discounts and shipping terms before ordering.`
         });
       } catch { notificationFailed = true; }
     }

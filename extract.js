@@ -31,5 +31,5 @@
   const body = document.body?.innerText || '';
   const shippingHints = [...body.matchAll(/[^\n.]{0,65}(?:free shipping|free delivery|免运费)[^\n.]{0,100}/gi)].slice(0, 3).map(m => m[0].trim());
   return {name, url: location.href, price, currency, availability, vintage: name.match(/\b(?:19|20)\d{2}\b/)?.[0] || '', size: name.match(/\b(?:\d{2,4}\s?ml|\d(?:\.\d+)?\s?[lL])\b/)?.[0] || '',
-    shippingHints, warning: ambiguous ? '页面有多个规格价格，请手动确认当前规格的价格。' : price ? '价格来自网页标记，请核对年份、规格和折扣。' : '未找到可靠价格，请手动填写。'};
+    shippingHints, warning: ambiguous ? 'The page lists prices for several sizes; confirm the price for the selected size manually.' : price ? 'Price read from page metadata; check the vintage, size and discounts.' : 'No reliable price found; enter it manually.'};
 })();

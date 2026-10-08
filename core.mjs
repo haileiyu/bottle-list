@@ -1,7 +1,7 @@
 export const emptyState = () => ({version: 1, wines: [], merchants: {}});
 export function webUrl(value) {
   const url = new URL(value);
-  if (!['http:', 'https:'].includes(url.protocol)) throw new Error('请输入 http 或 https 商品链接');
+  if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Enter an http or https product link');
   url.hash = '';
   for (const k of [...url.searchParams.keys()]) if (/^(utm_|fbclid$|gclid$)/i.test(k)) url.searchParams.delete(k);
   return url.href;
@@ -9,21 +9,21 @@ export function webUrl(value) {
 export const merchantId = url => new URL(webUrl(url)).hostname.toLowerCase().replace(/^www\./, '');
 export function cents(value, nullable = false) {
   if (nullable && (value === '' || value == null)) return null;
-  if (value === '' || value == null || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > 10000000) throw new Error('请输入有效的非负金额');
+  if (value === '' || value == null || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > 10000000) throw new Error('Enter a valid non-negative amount');
   return Math.round(Number(value) * 100);
 }
 export function normalizeWine(input) {
   const url = webUrl(input.url);
   const name = String(input.name || '').trim().slice(0, 500);
-  if (!name) throw new Error('请填写酒名');
+  if (!name) throw new Error('Enter the wine name');
   const quantity = Number(input.quantity);
-  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) throw new Error('数量应为 1–999 的整数');
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) throw new Error('Quantity must be a whole number from 1 to 999');
   const currency = String(input.currency || '').toUpperCase();
-  if (!['USD', 'EUR', 'GBP', 'CAD', 'HKD', 'JPY', 'AUD'].includes(currency)) throw new Error('请选择币种');
+  if (!['USD', 'EUR', 'GBP', 'CAD', 'HKD', 'JPY', 'AUD'].includes(currency)) throw new Error('Choose a currency');
   const score = input.ctScore === '' || input.ctScore == null ? null : Number(input.ctScore);
-  if (score != null && (!Number.isFinite(score) || score < 50 || score > 100)) throw new Error('CT 分数应在 50–100 之间；没有评分可留空');
+  if (score != null && (!Number.isFinite(score) || score < 50 || score > 100)) throw new Error('CT score must be between 50 and 100; leave blank if there is none');
   const ctUrl = input.ctUrl ? webUrl(input.ctUrl) : '';
-  if (ctUrl && !/(^|\.)cellartracker\.com$/.test(new URL(ctUrl).hostname)) throw new Error('评分来源请填写 CellarTracker 链接');
+  if (ctUrl && !/(^|\.)cellartracker\.com$/.test(new URL(ctUrl).hostname)) throw new Error('The score source must be a CellarTracker link');
   return {
     id: input.id || crypto.randomUUID(), url, merchant: merchantId(url), name,
     vintage: String(input.vintage || '').slice(0, 20), size: String(input.size || '750 ml').slice(0, 40),
@@ -48,23 +48,23 @@ export function applyOperation(state, action) {
   const next = structuredClone(state);
   if (action.type === 'saveWine') {
     const wine = normalizeWine(action.wine);
-    if (action.wine.id && !next.wines.some(w => w.id === action.wine.id)) throw new Error('这款酒已被删除，请重新打开清单');
+    if (action.wine.id && !next.wines.some(w => w.id === action.wine.id)) throw new Error('This wine has been deleted; reopen the list');
     const duplicate = next.wines.find(w => w.url === wine.url && w.status === 'watching' && w.id !== wine.id && w.vintage === wine.vintage && w.size === wine.size);
-    if (duplicate && !action.wine.id) throw new Error('已收藏这个链接的同年份、同规格酒款。请在清单中修改数量或价格。');
+    if (duplicate && !action.wine.id) throw new Error('A wine with this link, vintage and size is already saved. Change its quantity or price in the list.');
     const index = next.wines.findIndex(w => w.id === wine.id);
     if (index < 0) next.wines.push(wine); else next.wines[index] = wine;
     next.merchants[wine.merchant] ||= {name: wine.merchant, currency: wine.currency, thresholdCents: null, notes: '', notified: false};
   } else if (action.type === 'saveMerchant') {
-    if (!next.merchants[action.id]) throw new Error('找不到酒商');
+    if (!next.merchants[action.id]) throw new Error('Merchant not found');
     const m = action.merchant;
-    if (!['USD', 'EUR', 'GBP', 'CAD', 'HKD', 'JPY', 'AUD'].includes(m.currency)) throw new Error('币种无效');
+    if (!['USD', 'EUR', 'GBP', 'CAD', 'HKD', 'JPY', 'AUD'].includes(m.currency)) throw new Error('Invalid currency');
     Object.assign(next.merchants[action.id], {name: String(m.name || action.id).slice(0, 200), currency: m.currency, thresholdCents: cents(m.threshold, true), notes: String(m.notes || '').slice(0, 1000)});
   } else if (action.type === 'status') {
     const wine = next.wines.find(w => w.id === action.id);
-    if (!wine) throw new Error('找不到酒款');
+    if (!wine) throw new Error('Wine not found');
     wine.status = action.status === 'purchased' ? 'purchased' : 'watching';
   } else if (action.type === 'deleteWine') next.wines = next.wines.filter(w => w.id !== action.id);
-  else throw new Error('未知操作');
+  else throw new Error('Unknown action');
   return next;
 }
 export function notificationTransitions(state) {
@@ -76,4 +76,4 @@ export function notificationTransitions(state) {
   }
   return events;
 }
-export const money = (amount, currency = 'USD') => amount == null ? '待确认' : new Intl.NumberFormat('en-US', {style: 'currency', currency}).format(amount / 100);
+export const money = (amount, currency = 'USD') => amount == null ? 'TBD' : new Intl.NumberFormat('en-US', {style: 'currency', currency}).format(amount / 100);

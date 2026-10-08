@@ -12,7 +12,7 @@ test('Reads product metadata with decimal USD price and vintage',()=>{
  assert.equal(result.price,'95.50');assert.equal(result.vintage,'2016');assert.equal(result.size,'750 ml');assert.equal(result.availability,'in');
 });
 test('Multiple offers do not silently use the cheapest price',()=>{
- const result=extract({'@type':'Product',name:'Wine',offers:[{price:10},{price:100}]});assert.equal(result.price,'');assert.match(result.warning,/多个规格/);
+ const result=extract({'@type':'Product',name:'Wine',offers:[{price:10},{price:100}]});assert.equal(result.price,'');assert.match(result.warning,/several sizes/);
 });
 test('Selected variant matches the offer URL',()=>{
  const result=extract({'@graph':[{'@type':'Product',name:'Wine',offers:[{url:'https://example.com/wine?variant=1',price:10},{url:'https://example.com/wine?variant=2',price:100}]}]},{url:'https://example.com/wine?variant=2'});assert.equal(result.price,'100');

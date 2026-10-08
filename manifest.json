@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Wine Queue · 买酒清单",
+  "name": "Wine Queue · Wine Wish List",
   "version": "0.1.0",
-  "description": "一键收藏酒款，按酒商整理待购清单，达到设定的免运费门槛时提醒。",
+  "description": "Save wines in one click, organize your wish list by merchant, and get alerted when you reach a free-shipping threshold you set.",
   "permissions": ["activeTab", "scripting", "storage", "notifications"],
   "background": {"service_worker": "background.js", "type": "module"},
-  "action": {"default_popup": "popup.html", "default_title": "收藏这款酒", "default_icon": "icons/icon128.png"},
+  "action": {"default_popup": "popup.html", "default_title": "Save this wine", "default_icon": "icons/icon128.png"},
   "icons": {"16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png"}
 }
