@@ -1,9 +1,11 @@
 export const emptyState = () => ({version: 1, wines: [], merchants: {}});
+const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'HKD', 'JPY', 'AUD'];
 export function webUrl(value) {
   const url = new URL(value);
   if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Enter an http or https product link');
   url.hash = '';
   for (const k of [...url.searchParams.keys()]) if (/^(utm_|fbclid$|gclid$)/i.test(k)) url.searchParams.delete(k);
+  if (url.href.length > 2000) throw new Error('Link is too long (2,000 characters max)');
   return url.href;
 }
 export const merchantId = url => new URL(webUrl(url)).hostname.toLowerCase().replace(/^www\./, '');
@@ -19,7 +21,7 @@ export function normalizeWine(input) {
   const quantity = Number(input.quantity);
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) throw new Error('Quantity must be a whole number from 1 to 999');
   const currency = String(input.currency || '').toUpperCase();
-  if (!['USD', 'EUR', 'GBP', 'CAD', 'HKD', 'JPY', 'AUD'].includes(currency)) throw new Error('Choose a currency');
+  if (!CURRENCIES.includes(currency)) throw new Error('Choose a currency');
   const score = input.ctScore === '' || input.ctScore == null ? null : Number(input.ctScore);
   if (score != null && (!Number.isFinite(score) || score < 50 || score > 100)) throw new Error('CT score must be between 50 and 100; leave blank if there is none');
   const ctUrl = input.ctUrl ? webUrl(input.ctUrl) : '';
@@ -57,14 +59,30 @@ export function applyOperation(state, action) {
   } else if (action.type === 'saveMerchant') {
     if (!next.merchants[action.id]) throw new Error('Merchant not found');
     const m = action.merchant;
-    if (!['USD', 'EUR', 'GBP', 'CAD', 'HKD', 'JPY', 'AUD'].includes(m.currency)) throw new Error('Invalid currency');
+    if (!CURRENCIES.includes(m.currency)) throw new Error('Invalid currency');
     Object.assign(next.merchants[action.id], {name: String(m.name || action.id).slice(0, 200), currency: m.currency, thresholdCents: cents(m.threshold, true), notes: String(m.notes || '').slice(0, 1000)});
   } else if (action.type === 'status') {
     const wine = next.wines.find(w => w.id === action.id);
     if (!wine) throw new Error('Wine not found');
     wine.status = action.status === 'purchased' ? 'purchased' : 'watching';
   } else if (action.type === 'deleteWine') next.wines = next.wines.filter(w => w.id !== action.id);
-  else throw new Error('Unknown action');
+  else if (action.type === 'import') {
+    const backup = action.state;
+    if (!Array.isArray(backup?.wines) || typeof backup.merchants !== 'object' || backup.merchants === null) throw new Error('This file is not a Wine Queue backup');
+    for (const w of backup.wines) {
+      if (next.wines.some(existing => existing.id === w.id)) continue;
+      let wine;
+      try {wine = normalizeWine({...w, price: w.priceCents == null ? '' : w.priceCents / 100});} catch {continue;}
+      if (!Number.isNaN(Date.parse(w.updatedAt))) wine.updatedAt = new Date(w.updatedAt).toISOString();
+      if (next.wines.some(e => e.url === wine.url && e.vintage === wine.vintage && e.size === wine.size && e.status === wine.status)) continue;
+      next.wines.push(wine);
+      const m = backup.merchants[wine.merchant] || {};
+      next.merchants[wine.merchant] ||= {name: String(m.name || wine.merchant).slice(0, 200),
+        currency: CURRENCIES.includes(m.currency) ? m.currency : wine.currency,
+        thresholdCents: Number.isInteger(m.thresholdCents) && m.thresholdCents >= 0 ? m.thresholdCents : null,
+        notes: String(m.notes || '').slice(0, 1000), notified: m.notified === true};
+    }
+  } else throw new Error('Unknown action');
   return next;
 }
 export function notificationTransitions(state) {
@@ -77,3 +95,28 @@ export function notificationTransitions(state) {
   return events;
 }
 export const money = (amount, currency = 'USD') => amount == null ? 'TBD' : new Intl.NumberFormat('en-US', {style: 'currency', currency}).format(amount / 100);
+// chrome.storage.sync allows 8 KB per item, so each wine and merchant is its own key.
+export const SYNC_ITEM_BYTES = 8192;
+export function pack(state) {
+  const items = {meta: {version: state.version}};
+  for (const [id, m] of Object.entries(state.merchants)) items['m:' + id] = m;
+  for (const w of state.wines) items['w:' + w.id] = w;
+  return items;
+}
+export function unpack(items = {}) {
+  const state = emptyState();
+  for (const [key, value] of Object.entries(items)) {
+    if (key.startsWith('m:')) state.merchants[key.slice(2)] = value;
+    else if (key.startsWith('w:')) state.wines.push(value);
+  }
+  // A wine can sync to this device before its merchant does.
+  for (const w of state.wines) state.merchants[w.merchant] ||= {name: w.merchant, currency: w.currency, thresholdCents: null, notes: '', notified: false};
+  state.wines.sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
+  return state;
+}
+export function diff(prev, next) {
+  const set = {}, remove = Object.keys(prev).filter(key => !(key in next));
+  for (const [key, value] of Object.entries(next)) if (JSON.stringify(prev[key]) !== JSON.stringify(value)) set[key] = value;
+  return {set, remove};
+}
+export const itemBytes = (key, value) => new TextEncoder().encode(key + JSON.stringify(value)).length;

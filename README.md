@@ -35,11 +35,16 @@ Example: at one shop, $95 × 2 + $115 × 1 = $305; with a $300 threshold it show
 - **CT community scores are entered manually for now**, with a CT search shortcut and a source link. The extension does not use unverified merchant scores, does not automatically match vintages across sites, and does not bypass login restrictions. The CT link is for checking the source later and does not mean the extension has verified the score.
 - New wines default to USD. When the currency cannot be detected, the interface asks you to confirm it.
 - All wines to buy from one merchant make up one projected order. Purchased entries are not counted; the same wine saved at two shops counts toward each shop's projected order separately.
-- CSV export is suited for further work in Excel / Numbers. JSON export includes all wines and merchant settings to preserve the raw data; this version has no import screen yet.
+- CSV export is suited for further work in Excel / Numbers. "Export backup" saves all wines and merchant settings as JSON; "Import backup" adds them back, skipping wines already in the list and keeping existing merchant settings.
 
 ## Data and permissions
 
-Data is stored in `chrome.storage.local` for the current Chrome profile. It is not uploaded to any server or synced across devices, and there is no account and no tracking. Removing the extension or clearing extension data erases your records, so export them first.
+Data is stored in `chrome.storage.sync`, so it follows your Chrome profile: install the extension on another computer, sign in to Chrome with the same account, and the list appears there too. This needs Chrome sync turned on with "Extensions" included (Settings → You and Google → Sync). Without sync, data stays in this browser only. Nothing is sent anywhere except Chrome's own sync, and there is no separate account and no tracking.
+
+- Chrome sync allows about 100 KB in total, roughly a couple of hundred wines. When it is full, saving shows an error; export a backup and delete purchased wines to make room.
+- Each wine must stay under 8 KB, so very long notes may be rejected.
+- `manifest.json` has a fixed `key`, so the extension gets the same ID (`pbkeljmkheakplpmhhnjceonmmgpnmpc`) wherever its folder is. Chrome ties synced data to that ID; do not remove the key.
+- Removing the extension from every device, or clearing its data, erases your records, so export them first.
 
 - `activeTab` + `scripting`: reads product markup on the current page when you click the extension. There is no permanent permission to read every site.
 - `storage`: stores wines and merchant settings.
@@ -53,10 +58,11 @@ Plain JavaScript / CSS, Manifest V3, no dependencies to install, no build step. 
 
 - `core.mjs`: amounts, grouping, data validation, threshold status.
 - `background.js`: serialized saves, notifications, icon badge.
+- `storage.mjs`: reads and writes `chrome.storage.sync`, one key per wine and merchant.
 - `extract.js`: reads product info from the current page.
 - `popup.*`: save and update entry point.
 - `dashboard.*`: list, editing, filtering, export.
 
-Run `node --test tests/*.test.mjs`: 11 tests pass, covering amount totals, currency separation, threshold notification state, duplicate entries and page metadata extraction. JavaScript syntax checks pass.
+Run `node --test tests/*.test.mjs`: 13 tests pass, covering amount totals, currency separation, threshold notification state, duplicate entries, sync storage packing, backup import and page metadata extraction. JavaScript syntax checks pass.
 
 Installation, UI and operating-system notification testing in a real Chrome has not been done yet, and individual merchant sites have not been verified one by one; the current environment cannot download a test browser. After installing, save one or two products first, check the prices manually, then set that merchant's threshold to the current total to test the notification. Restore the real threshold when you are done.

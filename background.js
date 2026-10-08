@@ -1,4 +1,5 @@
-import {emptyState, applyOperation, notificationTransitions, totals, money} from './core.mjs';
+import {applyOperation, notificationTransitions, totals, money} from './core.mjs';
+import {loadState, saveState} from './storage.mjs';
 let queue = Promise.resolve();
 async function badge(state) {
   const ready = Object.keys(state.merchants).filter(id => totals(state, id).ready).length;
@@ -8,10 +9,10 @@ async function badge(state) {
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
   if (sender.id !== chrome.runtime.id || message?.channel !== 'wine-queue') return;
   queue = queue.catch(() => {}).then(async () => {
-    const state = (await chrome.storage.local.get('state')).state || emptyState();
+    const state = await loadState();
     const next = applyOperation(state, message.action);
     const events = notificationTransitions(next);
-    await chrome.storage.local.set({state: next});
+    await saveState(state, next);
     await badge(next).catch(() => {});
     let notificationFailed = false;
     for (const event of events) {
@@ -29,5 +30,6 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
 chrome.notifications.onClicked.addListener(id => {
   if (id.startsWith('merchant:')) chrome.tabs.create({url: chrome.runtime.getURL('dashboard.html') + '#' + encodeURIComponent(id.slice(9))});
 });
-chrome.runtime.onStartup.addListener(async () => badge((await chrome.storage.local.get('state')).state || emptyState()));
-chrome.runtime.onInstalled.addListener(async () => badge((await chrome.storage.local.get('state')).state || emptyState()));
+chrome.runtime.onStartup.addListener(async () => badge(await loadState()));
+chrome.runtime.onInstalled.addListener(async () => badge(await loadState()));
+chrome.storage.onChanged.addListener(async (changes, area) => {if (area === 'sync') await badge(await loadState()).catch(() => {});});

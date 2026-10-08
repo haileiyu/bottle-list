@@ -1,6 +1,6 @@
-import {emptyState} from './core.mjs';
+import {loadState} from './storage.mjs';
 export const $ = selector => document.querySelector(selector);
-export const state = async () => (await chrome.storage.local.get('state')).state || emptyState();
+export const state = loadState;
 export async function mutate(action) {
   const result = await chrome.runtime.sendMessage({channel: 'wine-queue', action});
   if (!result?.ok) throw new Error(result?.error || 'Save failed; reopen the extension');

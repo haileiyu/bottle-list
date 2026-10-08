@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId} from '../core.mjs';
+import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId, pack, unpack, diff, itemBytes, SYNC_ITEM_BYTES} from '../core.mjs';
 const wine = (extra={})=>({name:'2016 Example Barolo',url:'https://www.example.com/wine',price:95,quantity:2,currency:'USD',vintage:'2016',size:'750 ml',...extra});
 function setup(){let state=applyOperation(emptyState(),{type:'saveWine',wine:wine()});return applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{name:'Example Wines',threshold:300,currency:'USD'}});}
 test('Each merchant totals independently and crosses $300 exactly once',()=>{
@@ -32,4 +32,23 @@ test('Duplicate tracking links rejected while variants and distinct vintages rem
  const state=setup();assert.throws(()=>applyOperation(state,{type:'saveWine',wine:wine({url:'https://www.example.com/wine?utm_source=email'})}));
  assert.equal(applyOperation(state,{type:'saveWine',wine:wine({vintage:'2015'})}).wines.length,2);
  assert.equal(applyOperation(state,{type:'saveWine',wine:wine({url:'https://www.example.com/wine?variant=2'})}).wines.length,2);
+});
+test('Sync items round-trip, stay under the per-item limit and diff only what changed',()=>{
+ let state=setup();state=applyOperation(state,{type:'saveWine',wine:wine({url:'https://other.com/wine',notes:'x'.repeat(2000)})});
+ const items=pack(state);assert.deepEqual(Object.keys(items).sort(),['m:example.com','m:other.com','meta',...state.wines.map(w=>'w:'+w.id)].sort());
+ assert.deepEqual(unpack(structuredClone(items)),state);for(const [k,v] of Object.entries(items))assert.ok(itemBytes(k,v)<SYNC_ITEM_BYTES);
+ const id=state.wines[0].id,changed=applyOperation(state,{type:'status',id,status:'purchased'});
+ assert.deepEqual(Object.keys(diff(items,pack(changed)).set),['w:'+id]);assert.deepEqual(diff(items,pack(changed)).remove,[]);
+ assert.deepEqual(diff(items,pack(applyOperation(state,{type:'deleteWine',id}))),{set:{},remove:['w:'+id]});
+ const orphan=unpack({['w:'+id]:state.wines[0]});assert.equal(orphan.merchants['example.com'].currency,'USD');
+ assert.deepEqual(Object.keys(diff(pack(orphan),pack(applyOperation(orphan,{type:'saveWine',wine:wine({url:'https://other.com/x'})}))).set).filter(k=>k.startsWith('m:')),['m:other.com']);
+ assert.throws(()=>normalizeWine(wine({url:'https://example.com/?q='+'a'.repeat(2000)})),/too long/);
+});
+test('Import merges a backup without duplicating wines or overwriting settings',()=>{
+ const backup=setup(),state=applyOperation(emptyState(),{type:'saveWine',wine:wine({url:'https://other.com/wine'})});
+ let merged=applyOperation(state,{type:'import',state:JSON.parse(JSON.stringify(backup))});
+ assert.equal(merged.wines.length,2);assert.equal(merged.merchants['example.com'].thresholdCents,30000);assert.equal(merged.wines[1].updatedAt,backup.wines[0].updatedAt);
+ assert.deepEqual(applyOperation(merged,{type:'import',state:backup}),merged);
+ assert.throws(()=>applyOperation(state,{type:'import',state:{foo:1}}),/not a Wine Queue backup/);
+ const bad={...backup,wines:[{...backup.wines[0],id:'bad',url:'https://example.com/?q='+'a'.repeat(2000)},...backup.wines]};assert.equal(applyOperation(state,{type:'import',state:bad}).wines.length,2);
 });
