@@ -1,0 +1,8 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wine Queue · 我的买酒清单</title><link rel="stylesheet" href="style.css"></head>
+<body><div class="app"><header class="topbar"><a class="brand" href="dashboard.html"><img src="icons/icon48.png" alt=""> WINE QUEUE</a><div class="actions"><button id="export">导出 CSV</button><button id="backup">导出备份</button><button id="add" class="primary">＋ 手动添加</button></div></header>
+<main><section class="intro"><div><span class="eyebrow">YOUR NEXT GREAT BOTTLE</span><h1>好酒慢慢选，运费一起省。</h1><p class="muted">把散落在不同酒商的心仪酒款，收进一张待购清单。</p></div><span class="vintage-mark">WQ<span>私人选酒簿</span></span></section>
+<section class="stats" id="stats"></section>
+<section class="toolbar"><input id="search" type="search" placeholder="搜索酒名、年份、酒商…" aria-label="搜索清单"><div class="filters"><button class="active" data-filter="watching">待购清单</button><button data-filter="ready">已达门槛</button><button data-filter="purchased">已购买</button></div><select id="sort" aria-label="排序"><option value="recent">最近添加</option><option value="score">CT 评分高到低</option><option value="price">价格低到高</option></select></section>
+<p id="message" role="status"></p><div id="merchants"></div>
+<footer>金额按保存的单价 × 数量计算，不含税。运费门槛由你设置；折扣、寄送地区、会员和商品排除条件请以酒商结账页为准。<br>价格与库存为保存时的快照，不会后台自动刷新。重新打开商品页可更新价格。CT 社区评分手动填写。</footer>
+</main></div><dialog id="dialog"><div class="dialog-head"><h2 id="dialog-title">编辑酒款</h2><button id="close" aria-label="关闭">✕</button></div><form id="edit-form"></form><p id="dialog-error" class="error" role="alert"></p><button id="dialog-save" type="submit" form="edit-form" class="primary full">保存</button></dialog><script type="module" src="dashboard.js"></script></body></html>
