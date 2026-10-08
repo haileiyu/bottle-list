@@ -4,8 +4,8 @@ $('#open').onclick = () => chrome.tabs.create({url: chrome.runtime.getURL('dashb
 let draft = {};
 try {
   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-  if (!tab?.id || !/^https?:/.test(tab.url || '')) throw new Error('Open a merchant's product page first, or fill in the details here manually.');
-  if (/(^|\.)cellartracker\.com$/.test(new URL(tab.url).hostname)) throw new Error('This is a CellarTracker page. Edit the matching wine in "My list" and enter this page's community score and link.');
+  if (!tab?.id || !/^https?:/.test(tab.url || '')) throw new Error('Open a merchant\'s product page first, or fill in the details here manually.');
+  if (/(^|\.)cellartracker\.com$/.test(new URL(tab.url).hostname)) throw new Error('This is a CellarTracker page. Edit the matching wine in "My list" and enter this page\'s community score and link.');
   const [result] = await chrome.scripting.executeScript({target: {tabId: tab.id}, files: ['extract.js']});
   draft = result.result || {};
   $('#capture-status').textContent = draft.warning + (!draft.currency ? ' Currency not detected; defaulting to USD, please confirm.' : '') + (draft.shippingHints?.length ? ' Shipping notes on page: ' + draft.shippingHints.join(' / ') : '');
