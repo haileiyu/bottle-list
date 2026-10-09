@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bottle List · My list</title><link rel="stylesheet" href="style.css"></head>
-<body><div class="app"><header class="topbar"><nav class="nav"><button id="export">Export CSV</button><button id="backup">Export backup</button></nav><a class="brand" href="dashboard.html"><img src="icons/icon48.png" alt=""> BOTTLE LIST</a><div class="actions"><button id="add" class="primary">+ Add manually</button></div></header>
-<main><section class="intro"><h1>My list</h1></section>
+<body><header class="topbar"><div class="bar"><a class="brand" href="dashboard.html"><img src="icons/icon48.png" alt="">Bottle List</a><nav class="nav"><button id="export">Export CSV</button><button id="backup">Export backup</button></nav><div class="actions"><button id="add" class="primary">+ Add manually</button></div></div></header>
+<div class="app"><main><section class="intro"><h1>My list</h1></section>
 <section class="stats" id="stats"></section>
 <section class="toolbar"><input id="search" type="search" placeholder="Search wine, vintage, merchant…" aria-label="Search list"><div class="filters"><button class="active" data-filter="watching">Wish list</button><button data-filter="ready">Threshold reached</button><button data-filter="purchased">Purchased</button></div><select id="sort" aria-label="Sort"><option value="recent">Recently added</option><option value="score">CT score, high to low</option><option value="price">Price, low to high</option></select></section>
 <p id="message" role="status"></p><div id="merchants"></div>
