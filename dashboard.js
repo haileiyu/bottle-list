@@ -44,7 +44,8 @@ function render() {
       const score = el('td'); score.append(link(w.ctScore == null ? 'Find score ↗' : w.ctScore.toFixed(1),w.ctUrl || ctSearch(w.name + ' ' + w.vintage),w.ctScore == null ? 'tiny' : 'score'));
       if(w.ctScore!=null) score.append(el('small',w.ctUrl?'Manual · Source ↗':'Manual · No source','muted tiny'));
       const price = el('td'), findPrice = el('small'); findPrice.append(link('Find price ↗',wsSearch(w.name,w.vintage),'tiny')); price.append(money(w.priceCents,w.currency),findPrice);
-      const status = el('td'); status.append(el('span',w.status==='purchased'?'Purchased':w.availability==='out'?'Out of stock':!w.eligible?'Not counted':w.priceCents==null?'Price needed':w.currency!==m.currency?'Currency mismatch':w.availability==='unknown'?'Stock unverified':'To buy','status'),el('small',new Date(w.updatedAt).toLocaleDateString('en-US'),'muted'));
+      const [statusText,statusDot] = w.status==='purchased'?['Purchased','done']:w.availability==='out'?['Out of stock','bad']:!w.eligible?['Not counted','']:w.priceCents==null?['Price needed','warn']:w.currency!==m.currency?['Currency mismatch','warn']:w.availability==='unknown'?['Stock unverified','warn']:['To buy','ok'];
+      const status = el('td'); status.append(el('span',statusText,'status ' + statusDot),el('small',new Date(w.updatedAt).toLocaleDateString('en-US'),'muted'));
       const actions = el('td',null,'row-actions'); actions.append(button('Edit',()=>editWine(w),'text-button'),button(w.status==='purchased'?'Restore':'Bought',()=>act({type:'status',id:w.id,status:w.status==='purchased'?'watching':'purchased'}),'text-button'),button('Delete',()=>{if(confirm(`Delete "${w.name}" from the list?`))return act({type:'deleteWine',id:w.id});},'text-button muted'));
       row.append(name,price,qty,el('td',money(w.priceCents==null?null:w.priceCents*w.quantity,w.currency)),score,status,actions); tbody.append(row);
     }
