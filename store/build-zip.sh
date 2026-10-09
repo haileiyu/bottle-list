@@ -7,5 +7,6 @@ version=$(node -p "require('./manifest.json').version")
 mkdir -p dist
 rm -f "dist/bottle-list-$version.zip"
 zip -q -X "dist/bottle-list-$version.zip" manifest.json background.js core.mjs storage.mjs shared.js extract.js \
-  popup.html popup.js dashboard.html dashboard.js style.css icons/icon16.png icons/icon48.png icons/icon128.png
+  popup.html popup.js dashboard.html dashboard.js style.css icons/icon16.png icons/icon48.png icons/icon128.png \
+  fonts/*.woff2 fonts/OFL-*.txt
 echo "Built dist/bottle-list-$version.zip"
