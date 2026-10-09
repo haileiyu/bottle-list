@@ -1,5 +1,6 @@
 import {totals, money} from './core.mjs';
 import {$, state, mutate, element as el, link, ctSearch, wsSearch, wineFields, formData, download} from './shared.js';
+import {notSynced} from './storage.mjs';
 let data = await state(), filter = 'watching';
 const message = text => {$('#message').textContent = text;};
 async function act(action) {const result = await mutate(action); data = await state(); render(); if(result.notificationFailed) message('Saved. The system notification was not sent; check the list for threshold alerts.');}
@@ -74,6 +75,7 @@ $('#export').onclick=()=>{
   const quote=value=>'"'+String(value).replace(/^[=+@\-\t\r]/,s=>"'"+s).replace(/"/g,'""')+'"';
   download('bottle-list.csv','\ufeff'+rows.map(row=>row.map(quote).join(',')).join('\r\n'),'text/csv;charset=utf-8');
 };
-chrome.storage.onChanged.addListener(async(changes,area)=>{if(area==='local'&&changes.state){data=await state();render();}});
+chrome.storage.onChanged.addListener(async(changes,area)=>{if(area==='sync'||(area==='local'&&changes.state)){data=await state();render();}});
 render();
+if(await notSynced()) message('Your list is too large for Chrome sync (about 100 KB), so it is kept on this computer only. Delete purchased wines to make room; it will start syncing on your next change.');
 if(location.hash) document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView();

@@ -30,7 +30,7 @@ WHAT IT DOES NOT DO
 • Scores are entered by you. Bottle List is not affiliated with CellarTracker or Wine-Searcher.
 
 PRIVATE BY DESIGN
-Your list stays in Chrome on your computer. There is no account, no server and no tracking. The extension reads a page only when you click its icon.
+Your list stays in Chrome, and follows you to your other computers through Chrome sync if you have it on. There is no separate account, no server and no tracking. The extension reads a page only when you click its icon.
 
 Please buy and drink responsibly, and follow the alcohol laws where you live.
 ```
@@ -91,7 +91,7 @@ Used with activeTab to run one script (extract.js, included in the package) in t
 storage:
 
 ```
-Stores the user's saved wines and their per-shop settings (free-shipping threshold, case discount, notes) in chrome.storage.local on the user's computer. Nothing is sent to a server.
+Stores the user's saved wines and their per-shop settings (free-shipping threshold, case discount, notes) in chrome.storage.sync, so Chrome sync can carry them to the user's other computers. Nothing is sent to any other server.
 ```
 
 notifications:
@@ -104,7 +104,7 @@ Shows a notification when the total of the wines saved for one shop reaches the 
 
 **Are you using remote code?** No, I am not using remote code.
 
-**Data usage.** Tick only **Website content**: the extension reads product details from the page the user clicks it on and stores them locally. Leave every other category unticked. The extension handles no names, emails, payment details, passwords, location or browsing history.
+**Data usage.** Tick only **Website content**: the extension reads product details from the page the user clicks it on and stores them in Chrome's own extension storage (synced by Chrome if the user has sync on). Leave every other category unticked. The extension handles no names, emails, payment details, passwords, location or browsing history.
 
 Tick all three certifications:
 
@@ -132,5 +132,5 @@ No account or login is needed.
 2. Check the filled-in fields and click "Add to wish list". If the page has no product markup, the price is left blank and can be typed in.
 3. Click "My list" to see the saved wine grouped by shop. Click "Shipping settings" on the shop, enter a threshold at or below the current total (for example 1), and save; a "Threshold reached" notification appears and the icon shows a badge.
 4. In "Shipping settings", enter a case discount (for example 2 items, 10%) and set the wine's quantity to 2 to see the discount applied.
-All data stays in chrome.storage.local. The extension does not buy anything or contact any server.
+All data is kept in chrome.storage.sync. The extension does not buy anything or contact any server of its own.
 ```

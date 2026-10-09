@@ -1,5 +1,7 @@
-import {emptyState, applyOperation, notificationTransitions, totals, money} from './core.mjs';
+import {applyOperation, notificationTransitions, totals, money} from './core.mjs';
+import {loadState, saveState, migrateLocal} from './storage.mjs';
 let queue = Promise.resolve();
+const serial = task => (queue = queue.catch(() => {}).then(task));
 async function badge(state) {
   const ready = Object.keys(state.merchants).filter(id => totals(state, id).ready).length;
   await chrome.action.setBadgeText({text: ready ? String(ready) : ''});
@@ -7,11 +9,12 @@ async function badge(state) {
 }
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
   if (sender.id !== chrome.runtime.id || message?.channel !== 'bottle-list') return;
-  queue = queue.catch(() => {}).then(async () => {
-    const state = (await chrome.storage.local.get('state')).state || emptyState();
+  serial(async () => {
+    await migrateLocal();
+    const state = await loadState();
     const next = applyOperation(state, message.action);
     const events = notificationTransitions(next);
-    await chrome.storage.local.set({state: next});
+    await saveState(state, next);
     await badge(next).catch(() => {});
     let notificationFailed = false;
     for (const event of events) {
@@ -29,5 +32,8 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
 chrome.notifications.onClicked.addListener(id => {
   if (id.startsWith('merchant:')) chrome.tabs.create({url: chrome.runtime.getURL('dashboard.html') + '#' + encodeURIComponent(id.slice(9))});
 });
-chrome.runtime.onStartup.addListener(async () => badge((await chrome.storage.local.get('state')).state || emptyState()));
-chrome.runtime.onInstalled.addListener(async () => badge((await chrome.storage.local.get('state')).state || emptyState()));
+const refresh = () => serial(async () => {await migrateLocal(); await badge(await loadState());}).catch(() => {});
+chrome.runtime.onStartup.addListener(refresh);
+chrome.runtime.onInstalled.addListener(refresh);
+// Another computer synced a change.
+chrome.storage.onChanged.addListener((changes, area) => {if (area === 'sync') loadState().then(badge).catch(() => {});});

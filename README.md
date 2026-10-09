@@ -42,7 +42,13 @@ Case discount example: 12 × $25 = $300 with a 10% discount at 12+ items comes t
 
 ## Data and permissions
 
-Data is stored in `chrome.storage.local` for the current Chrome profile. It is not uploaded to any server or synced across devices, and there is no account and no tracking. Removing the extension or clearing extension data erases your records, so export them first.
+Data is stored in `chrome.storage.sync`, so it follows your Chrome profile: on another computer signed in to Chrome with the same account, the same list appears. This needs Chrome sync turned on with "Extensions" included (Settings → You and Google → Sync). Without sync, the list stays in this browser only. Nothing is sent anywhere except through Chrome's own sync, and there is no separate account and no tracking.
+
+- Chrome only syncs data between copies of the extension with the same ID. Copies installed from the Chrome Web Store always share one ID. An unpacked copy's ID depends on where its folder is, so two unpacked copies on different computers usually do not sync with each other.
+- Earlier versions kept the list on this computer only (`chrome.storage.local`). After updating, it moves into sync storage by itself and is merged with anything another computer has already synced: wines missing from the synced list are added, and shops that are already synced keep their settings.
+- Chrome sync allows about 100 KB in total, roughly a couple of hundred wines. A list that is too large to move stays on this computer, and the list page says so; it moves on the next change once there is room. When synced storage is full, saving shows an error; export a backup and delete purchased wines to make room.
+- If two computers change the same wine or shop before syncing, the last change wins.
+- Removing the extension from every computer, or clearing its data, erases your records, so export them first.
 
 - `activeTab` + `scripting`: reads product markup on the current page when you click the extension. There is no permanent permission to read every site.
 - `storage`: stores wines and merchant settings.
@@ -56,11 +62,12 @@ Plain JavaScript / CSS, Manifest V3, no dependencies to install, no build step. 
 
 - `core.mjs`: amounts, case discounts, grouping, data validation, threshold status.
 - `background.js`: serialized saves, notifications, icon badge.
+- `storage.mjs`: reads and writes `chrome.storage.sync`, one key per wine and merchant, and moves lists from earlier versions out of `chrome.storage.local`.
 - `extract.js`: reads product info from the current page.
 - `popup.*`: save and update entry point.
 - `dashboard.*`: list, editing, filtering, export.
 - `store/`: Chrome Web Store listing text (`LISTING.md`), images, and `build-zip.sh`, which builds the upload zip in `dist/`. The privacy policy is `PRIVACY.md`.
 
-Run `node --test tests/*.test.mjs`: 13 tests pass, covering amount totals, case discounts, currency separation, threshold notification state, duplicate entries and page metadata extraction. JavaScript syntax checks pass.
+Run `node --test tests/*.test.mjs`: 19 tests pass, covering amount totals, case discounts, Title Case names, currency separation, threshold notification state, duplicate entries, sync storage, moving older lists into sync, and page metadata extraction. JavaScript syntax checks pass.
 
 Installation, UI and operating-system notification testing in a real Chrome has not been done yet, and individual merchant sites have not been verified one by one; the current environment cannot download a test browser. After installing, save one or two products first, check the prices manually, then set that merchant's threshold to the current total to test the notification. Restore the real threshold when you are done.

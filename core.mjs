@@ -4,6 +4,7 @@ export function webUrl(value) {
   if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Enter an http or https product link');
   url.hash = '';
   for (const k of [...url.searchParams.keys()]) if (/^(utm_|fbclid$|gclid$)/i.test(k)) url.searchParams.delete(k);
+  if (url.href.length > 2000) throw new Error('Link is too long (2,000 characters max)');
   return url.href;
 }
 export const merchantId = url => new URL(webUrl(url)).hostname.toLowerCase().replace(/^www\./, '');
@@ -117,3 +118,38 @@ export function notificationTransitions(state) {
   return events;
 }
 export const money = (amount, currency = 'USD') => amount == null ? 'TBD' : new Intl.NumberFormat('en-US', {style: 'currency', currency}).format(amount / 100);
+// chrome.storage.sync allows 8 KB per item, so each wine and merchant is its own key.
+export const SYNC_ITEM_BYTES = 8192;
+export function pack(state) {
+  const items = {};
+  for (const [id, m] of Object.entries(state.merchants)) items['m:' + id] = m;
+  for (const w of state.wines) items['w:' + w.id] = w;
+  return items;
+}
+export function unpack(items = {}) {
+  const state = emptyState();
+  for (const [key, value] of Object.entries(items)) {
+    if (key.startsWith('m:')) state.merchants[key.slice(2)] = value;
+    else if (key.startsWith('w:')) state.wines.push(value);
+  }
+  // A wine can sync to this computer before its merchant does.
+  for (const w of state.wines) state.merchants[w.merchant] ||= {name: w.merchant, currency: w.currency, thresholdCents: null, caseSize: null, caseDiscount: null, notes: '', notified: false};
+  state.wines.sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
+  return state;
+}
+export function diff(prev, next) {
+  const set = {}, remove = Object.keys(prev).filter(key => !(key in next));
+  for (const [key, value] of Object.entries(next)) if (JSON.stringify(prev[key]) !== JSON.stringify(value)) set[key] = value;
+  return {set, remove};
+}
+export const itemBytes = (key, value) => new TextEncoder().encode(key + JSON.stringify(value)).length;
+// Adds the wines in `from` that `into` does not have yet. Merchants already in `into` keep their settings.
+export function mergeState(into, from) {
+  const next = structuredClone(into);
+  for (const w of from.wines) {
+    if (next.wines.some(e => e.id === w.id || (e.url === w.url && e.vintage === w.vintage && e.size === w.size && e.status === w.status))) continue;
+    next.wines.push(w);
+    if (from.merchants[w.merchant] && !next.merchants[w.merchant]) next.merchants[w.merchant] = from.merchants[w.merchant];
+  }
+  return next;
+}
