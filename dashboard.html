@@ -4,5 +4,5 @@
 <section class="stats" id="stats"></section>
 <section class="toolbar"><input id="search" type="search" placeholder="Search wine, vintage, merchant…" aria-label="Search list"><div class="filters"><button class="active" data-filter="watching">Wish list</button><button data-filter="ready">Threshold reached</button><button data-filter="purchased">Purchased</button></div><select id="sort" aria-label="Sort"><option value="recent">Recently added</option><option value="score">CT score, high to low</option><option value="price">Price, low to high</option></select></section>
 <p id="message" role="status"></p><div id="merchants"></div>
-<footer>Totals are unit price × quantity, before tax. Prices and stock are from when you saved each wine and don't update on their own.</footer>
+<footer>Totals are unit price × quantity, less any case discount you set, before tax. Prices and stock are from when you saved each wine and don't update on their own.</footer>
 </main></div><dialog id="dialog"><div class="dialog-head"><h2 id="dialog-title">Edit wine</h2><button id="close" aria-label="Close">✕</button></div><form id="edit-form"></form><p id="dialog-error" class="error" role="alert"></p><button id="dialog-save" type="submit" form="edit-form" class="primary full">Save</button></dialog><script type="module" src="dashboard.js"></script></body></html>

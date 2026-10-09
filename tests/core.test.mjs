@@ -33,3 +33,21 @@ test('Duplicate tracking links rejected while variants and distinct vintages rem
  assert.equal(applyOperation(state,{type:'saveWine',wine:wine({vintage:'2015'})}).wines.length,2);
  assert.equal(applyOperation(state,{type:'saveWine',wine:wine({url:'https://www.example.com/wine?variant=2'})}).wines.length,2);
 });
+test('Case discount applies at the case size and is used for the threshold',()=>{
+ let state=applyOperation(emptyState(),{type:'saveWine',wine:wine({price:25,quantity:11})});
+ state=applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{currency:'USD',threshold:270,caseSize:12,caseDiscount:10}});
+ let t=totals(state,'example.com');assert.equal(t.caseApplied,false);assert.equal(t.discount,0);assert.equal(t.total,27500);assert.equal(t.bottlesToCase,1);assert.equal(t.ready,true);
+ state=applyOperation(state,{type:'saveWine',wine:{...state.wines[0],price:25,quantity:12}});
+ t=totals(state,'example.com');assert.equal(t.caseApplied,true);assert.equal(t.subtotal,30000);assert.equal(t.discount,3000);assert.equal(t.total,27000);assert.equal(t.bottlesToCase,0);assert.equal(t.ready,true);
+ state=applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{currency:'USD',threshold:300,caseSize:12,caseDiscount:10}});
+ t=totals(state,'example.com');assert.equal(t.ready,false);assert.equal(t.remaining,3000);
+ const [event]=notificationTransitions(applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{currency:'USD',threshold:270,caseSize:12,caseDiscount:10}}));
+ assert.equal(event.total,27000);assert.equal(event.caseDiscount,10);
+});
+test('Case discount settings are validated and legacy merchants still total',()=>{
+ const state=setup();const save=merchant=>applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{currency:'USD',threshold:300,...merchant}});
+ for(const patch of [{caseSize:1,caseDiscount:10},{caseSize:1.5,caseDiscount:10},{caseSize:12,caseDiscount:0},{caseSize:12,caseDiscount:-5},{caseSize:12,caseDiscount:101},{caseSize:12},{caseDiscount:10},{caseSize:12,caseDiscount:''}])assert.throws(()=>save(patch));
+ const cleared=save({caseSize:'',caseDiscount:''});assert.equal(cleared.merchants['example.com'].caseSize,null);assert.equal(totals(cleared,'example.com').caseConfigured,false);
+ const legacy=structuredClone(state);delete legacy.merchants['example.com'].caseSize;delete legacy.merchants['example.com'].caseDiscount;
+ const t=totals(legacy,'example.com');assert.equal(t.total,19000);assert.equal(t.discount,0);assert.equal(t.bottlesToCase,null);
+});

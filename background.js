@@ -18,7 +18,7 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
       try {
         await chrome.notifications.create('merchant:' + event.id, {
           type: 'basic', iconUrl: 'icons/icon128.png', title: `${event.name} · Threshold reached`,
-          message: `${event.bottles} item(s), ${money(event.subtotal, event.currency)} total. Check stock, discounts and shipping terms before ordering.`
+          message: `${event.bottles} item(s), ${money(event.total, event.currency)} total${event.caseDiscount != null ? ` after ${event.caseDiscount}% case discount` : ''}. Check stock, discounts and shipping terms before ordering.`
         });
       } catch { notificationFailed = true; }
     }

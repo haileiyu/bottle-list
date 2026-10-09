@@ -17,12 +17,14 @@ This package is an inspectable, personal-use build and has not been published to
 1. Find a cheap wine → open the **specific product page** → click the Bottle List icon.
 2. The extension tries to read the wine name, vintage, size, price, currency and stock. Check the vintage and size, enter how many you want, and save. The price may be per case, so enter the quantity in the unit the page sells.
 3. Click "Find prices on Wine-Searcher" to compare the price with other shops (the list has a "Find price" link under each price too). Click "Find this wine on CellarTracker", confirm it is the same wine and vintage, and enter the **community average score** and that wine's CT link. Do not enter critic scores from RP / WA / JS / Vinous.
-4. Open "My list" → click "Shipping settings" for that merchant, e.g. USD 300 before tax. The threshold starts empty; the extension does not assume every shop offers free shipping over $300.
+4. Open "My list" → click "Shipping settings" for that merchant, e.g. USD 300 before tax. The threshold starts empty; the extension does not assume every shop offers free shipping over $300. If the shop offers a case discount, enter the minimum number of items and the percent off (e.g. 12 items, 10%).
 5. Keep saving. The list shows each shop's subtotal, the amount left to reach the threshold, CT scores and product links. You can edit quantities directly in the table.
 6. When a merchant goes from below to at or above its threshold, the extension sends a system notification and shows the number of merchants that reached their thresholds on the icon badge; the list also shows a green status. If notifications are disabled in macOS / Chrome, you can still check the list and the icon.
 7. After ordering, click "Bought" to move the wine to your purchase history; click "Restore" if you did it by mistake. If the total drops below the threshold, you will be alerted again the next time it is reached.
 
 Example: at one shop, $95 × 2 + $115 × 1 = $305; with a $300 threshold it shows as reached. Wines saved from another shop are not combined with it.
+
+Case discount example: 12 × $25 = $300 with a 10% discount at 12+ items comes to $270, so a $300 threshold is not reached yet. With 11 bottles the list shows "1 more item(s) for the 10% case discount".
 
 ## Current support and limitations
 
@@ -30,7 +32,8 @@ Example: at one shop, $95 × 2 + $115 × 1 = $305; with a $300 threshold it show
 - Check discounts, vintage, size, currency and stock before saving. Page metadata may not exactly match the currently selected variant.
 - Merchants are grouped by domain. `www` and non-`www` are merged; other subdomains and different domains are not merged automatically.
 - Amounts are calculated in integer cents. Wines that are out of stock, have no price, use a currency different from the merchant setting, or have "Count this wine toward free shipping" unchecked are not counted. Wines with unknown stock but a valid price are counted and flagged as unverified.
-- A threshold is reached when the total is **greater than or equal to** the amount you set. Tax is excluded, currencies are not converted, and promo codes are not applied automatically. Memberships, New York State shipping coverage, promotion exclusions, bottle-count thresholds and the like must be checked manually; you can write them in the merchant notes. Only the amount threshold is calculated automatically.
+- A threshold is reached when the total is **greater than or equal to** the amount you set. Tax is excluded, currencies are not converted, and promo codes are not applied automatically. Memberships, New York State shipping coverage, promotion exclusions, bottle-count shipping thresholds and the like must be checked manually; you can write them in the merchant notes. Only the amount threshold and an optional case discount are calculated automatically.
+- A case discount is one rule per merchant: once the counted items reach the minimum you set, the percent comes off the whole counted order (not only full cases). Items are counted by Qty as entered, so a "6 × 750 ml" case saved with Qty 1 counts as one item. The free-shipping threshold is compared against the total **after** the case discount. Tiered or mixed-case-only discounts must be checked manually.
 - **The first version does not check prices in the background, monitor stock, compare prices across the web, or search for cheap wine automatically.** Prices and stock are snapshots from when you saved them. Reopen the same product link and click the extension to update the existing entry (quantity and CT fields are kept), or edit it manually in the list.
 - **CT community scores are entered manually for now**, with a CT search shortcut and a source link. The extension does not use unverified merchant scores, does not automatically match vintages across sites, and does not bypass login restrictions. The CT link is for checking the source later and does not mean the extension has verified the score.
 - New wines default to USD when the page does not show a currency; check the Currency field before saving.
@@ -51,12 +54,12 @@ The extension does not buy anything automatically, does not touch real shopping 
 
 Plain JavaScript / CSS, Manifest V3, no dependencies to install, no build step. After editing, click reload on the extensions page.
 
-- `core.mjs`: amounts, grouping, data validation, threshold status.
+- `core.mjs`: amounts, case discounts, grouping, data validation, threshold status.
 - `background.js`: serialized saves, notifications, icon badge.
 - `extract.js`: reads product info from the current page.
 - `popup.*`: save and update entry point.
 - `dashboard.*`: list, editing, filtering, export.
 
-Run `node --test tests/*.test.mjs`: 11 tests pass, covering amount totals, currency separation, threshold notification state, duplicate entries and page metadata extraction. JavaScript syntax checks pass.
+Run `node --test tests/*.test.mjs`: 13 tests pass, covering amount totals, case discounts, currency separation, threshold notification state, duplicate entries and page metadata extraction. JavaScript syntax checks pass.
 
 Installation, UI and operating-system notification testing in a real Chrome has not been done yet, and individual merchant sites have not been verified one by one; the current environment cannot download a test browser. After installing, save one or two products first, check the prices manually, then set that merchant's threshold to the current total to test the notification. Restore the real threshold when you are done.

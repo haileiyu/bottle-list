@@ -38,10 +38,17 @@ export function totals(state, id) {
   const wines = state.wines.filter(w => w.merchant === id && w.status === 'watching');
   const included = wines.filter(w => w.eligible && w.availability !== 'out' && w.priceCents != null && w.currency === m.currency);
   const subtotal = included.reduce((s, w) => s + w.priceCents * w.quantity, 0);
+  const bottles = included.reduce((s, w) => s + w.quantity, 0);
+  // Case discount: percent off the whole counted order once it has at least caseSize items.
+  const caseConfigured = m.caseSize != null && m.caseDiscount != null;
+  const caseApplied = caseConfigured && bottles >= m.caseSize;
+  const discount = caseApplied ? Math.round(subtotal * m.caseDiscount / 100) : 0;
+  const total = subtotal - discount;
   const configured = m.thresholdCents != null;
-  return {wines, included, subtotal, bottles: included.reduce((s, w) => s + w.quantity, 0), configured,
-    ready: configured && included.length > 0 && subtotal >= m.thresholdCents,
-    remaining: configured ? Math.max(0, m.thresholdCents - subtotal) : null,
+  return {wines, included, subtotal, discount, total, bottles, configured, caseConfigured, caseApplied,
+    bottlesToCase: caseConfigured ? Math.max(0, m.caseSize - bottles) : null,
+    ready: configured && included.length > 0 && total >= m.thresholdCents,
+    remaining: configured ? Math.max(0, m.thresholdCents - total) : null,
     excluded: wines.length - included.length};
 }
 export function applyOperation(state, action) {
@@ -53,12 +60,18 @@ export function applyOperation(state, action) {
     if (duplicate && !action.wine.id) throw new Error('A wine with this link, vintage and size is already saved. Change its quantity or price in the list.');
     const index = next.wines.findIndex(w => w.id === wine.id);
     if (index < 0) next.wines.push(wine); else next.wines[index] = wine;
-    next.merchants[wine.merchant] ||= {name: wine.merchant, currency: wine.currency, thresholdCents: null, notes: '', notified: false};
+    next.merchants[wine.merchant] ||= {name: wine.merchant, currency: wine.currency, thresholdCents: null, caseSize: null, caseDiscount: null, notes: '', notified: false};
   } else if (action.type === 'saveMerchant') {
     if (!next.merchants[action.id]) throw new Error('Merchant not found');
     const m = action.merchant;
     if (!['USD', 'EUR', 'GBP', 'CAD', 'HKD', 'JPY', 'AUD'].includes(m.currency)) throw new Error('Invalid currency');
-    Object.assign(next.merchants[action.id], {name: String(m.name || action.id).slice(0, 200), currency: m.currency, thresholdCents: cents(m.threshold, true), notes: String(m.notes || '').slice(0, 1000)});
+    const blank = value => value === '' || value == null;
+    const caseSize = blank(m.caseSize) ? null : Number(m.caseSize);
+    const caseDiscount = blank(m.caseDiscount) ? null : Number(m.caseDiscount);
+    if (caseSize != null && (!Number.isInteger(caseSize) || caseSize < 2 || caseSize > 999)) throw new Error('Case size must be a whole number from 2 to 999');
+    if (caseDiscount != null && (!Number.isFinite(caseDiscount) || caseDiscount <= 0 || caseDiscount > 100)) throw new Error('Case discount must be more than 0% and at most 100%');
+    if ((caseSize == null) !== (caseDiscount == null)) throw new Error('Enter both the case size and the case discount, or leave both blank');
+    Object.assign(next.merchants[action.id], {name: String(m.name || action.id).slice(0, 200), currency: m.currency, thresholdCents: cents(m.threshold, true), caseSize, caseDiscount, notes: String(m.notes || '').slice(0, 1000)});
   } else if (action.type === 'status') {
     const wine = next.wines.find(w => w.id === action.id);
     if (!wine) throw new Error('Wine not found');
@@ -71,7 +84,7 @@ export function notificationTransitions(state) {
   const events = [];
   for (const [id, m] of Object.entries(state.merchants)) {
     const t = totals(state, id);
-    if (t.ready && !m.notified) events.push({id, name: m.name, currency: m.currency, subtotal: t.subtotal, bottles: t.bottles});
+    if (t.ready && !m.notified) events.push({id, name: m.name, currency: m.currency, subtotal: t.subtotal, total: t.total, caseDiscount: t.caseApplied ? m.caseDiscount : null, bottles: t.bottles});
     m.notified = t.ready;
   }
   return events;

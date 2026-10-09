@@ -25,9 +25,10 @@ function render() {
     const controls = el('div', null,'actions'); controls.append(el('span',t.ready ? '✓ Threshold reached' : !t.configured ? 'Threshold not set' : `${money(t.remaining,m.currency)} to go`,t.ready ? 'pill green' : 'pill'),button('Shipping settings',()=>editMerchant(id)));
     head.append(title,controls); card.append(head);
     const summary = el('div',null,'merchant-summary');
-    const sumText = el('div'); sumText.append(el('strong',money(t.subtotal,m.currency)),document.createTextNode(` / ${t.configured ? money(m.thresholdCents,m.currency) : 'not set'} · ${t.bottles} item(s) counted`));
+    const sumText = el('div'); sumText.append(el('strong',money(t.total,m.currency)),document.createTextNode(` / ${t.configured ? money(m.thresholdCents,m.currency) : 'not set'} · ${t.bottles} item(s) counted`));
     summary.append(sumText);
-    const track = el('div',null,'progress'); const fill = el('div',null,t.ready ? 'complete' : ''); fill.style.width = (t.configured ? (m.thresholdCents === 0 ? (t.ready ? 100 : 0) : Math.min(100,t.subtotal/m.thresholdCents*100)) : 0) + '%'; track.append(fill); summary.append(track);
+    const track = el('div',null,'progress'); const fill = el('div',null,t.ready ? 'complete' : ''); fill.style.width = (t.configured ? (m.thresholdCents === 0 ? (t.ready ? 100 : 0) : Math.min(100,t.total/m.thresholdCents*100)) : 0) + '%'; track.append(fill); summary.append(track);
+    if (t.caseConfigured) summary.append(el('small',t.caseApplied ? `Includes −${money(t.discount,m.currency)} case discount (${m.caseDiscount}% off ${money(t.subtotal,m.currency)} at ${m.caseSize}+ items).` : `${t.bottlesToCase} more item(s) for the ${m.caseDiscount}% case discount (${m.caseSize}+ items).`,t.caseApplied ? 'success' : 'muted'));
     if (t.excluded) summary.append(el('small',`${t.excluded} wine(s) not counted: check price, currency, stock or exclusion settings.`,'muted'));
     if (m.notes) summary.append(el('small',m.notes,'muted'));
     card.append(summary);
@@ -56,10 +57,10 @@ function submitDialog(form, handler) {form.onsubmit=async event=>{event.preventD
 function editWine(wine={}) {const form=openDialog(wine.id?'Edit wine':'Add wine'); wineFields(form,wine); submitDialog(form,()=>act({type:'saveWine',wine:{...wine,...formData(form)}}));}
 function editMerchant(id) {
   const m=data.merchants[id],form=openDialog('Merchant & free-shipping settings');
-  for(const [name,title,value,type] of [['name','Merchant name',m.name,'text'],['threshold','Free-shipping threshold (pre-tax; leave blank for no alert)',m.thresholdCents==null?'':m.thresholdCents/100,'number'],['notes','Regions / membership / exclusions',m.notes,'text']]) {
-    const label=el('label',title),input=el('input');input.name=name;input.value=value;input.type=type;if(type==='number'){input.min=0;input.step='0.01';input.max='10000000';input.placeholder='e.g. 300';}label.append(input);form.append(label);
+  for(const [name,title,value,type,attrs] of [['name','Merchant name',m.name,'text'],['threshold','Free-shipping threshold (pre-tax, after case discount; leave blank for no alert)',m.thresholdCents==null?'':m.thresholdCents/100,'number',{min:0,step:'0.01',max:'10000000',placeholder:'e.g. 300'}],['caseSize','Case discount: minimum items (leave blank if none)',m.caseSize??'','number',{min:2,step:1,max:999,placeholder:'e.g. 12'}],['caseDiscount','Case discount: percent off',m.caseDiscount??'','number',{min:0.01,step:'0.01',max:100,placeholder:'e.g. 10'}],['notes','Regions / membership / exclusions',m.notes,'text']]) {
+    const label=el('label',title),input=el('input');input.name=name;input.value=value;input.type=type;Object.assign(input,attrs);label.append(input);form.append(label);
   }
-  const label=el('label','Threshold currency'),select=el('select');select.name='currency';for(const currency of ['USD','EUR','GBP','CAD','HKD','JPY','AUD']){const option=el('option',currency);option.value=currency;select.append(option);}select.value=m.currency;label.append(select);form.append(label,el('p','Confirm the threshold from the merchant\'s shipping policy. Reaching it only means you hit the amount you set; check at checkout whether it still qualifies after discounts and whether they ship to New York.','muted tiny'));
+  const label=el('label','Threshold currency'),select=el('select');select.name='currency';for(const currency of ['USD','EUR','GBP','CAD','HKD','JPY','AUD']){const option=el('option',currency);option.value=currency;select.append(option);}select.value=m.currency;label.append(select);form.append(label,el('p','Confirm the threshold from the merchant\'s shipping policy. Reaching it only means you hit the amount you set; check at checkout whether it still qualifies after discounts and whether they ship to New York. The case discount takes the percent off the whole counted order once it has at least that many items, counting Qty as entered (a 6-bottle case with Qty 1 counts as one item).','muted tiny'));
   submitDialog(form,()=>act({type:'saveMerchant',id,merchant:Object.fromEntries(new FormData(form))}));
 }
 $('#close').onclick=()=>$('#dialog').close();
