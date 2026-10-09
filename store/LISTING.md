@@ -1,12 +1,12 @@
-# Chrome Web Store submission: Bottle List 1.0.0
+# Chrome Web Store submission: Bottle List 1.1.0
 
 Everything to enter in the Chrome Web Store developer dashboard, in the order the dashboard asks for it. Copy the text in the boxes as is.
 
 ## 1. Package
 
-Upload `dist/bottle-list-1.0.0.zip`. To rebuild it after a change, run `sh store/build-zip.sh` from the project folder.
+Upload `dist/bottle-list-1.1.0.zip`. To rebuild it after a change, run `sh store/build-zip.sh` from the project folder.
 
-Each new upload must have a higher `version` in `manifest.json` than the last one (1.0.0 → 1.0.1, for example).
+Each new upload must have a higher `version` in `manifest.json` than the last one (1.1.0 → 1.1.1, for example).
 
 The name, short description (summary) and icon come from `manifest.json` automatically.
 

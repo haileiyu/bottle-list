@@ -1,6 +1,6 @@
 # Bottle List
 
-Chrome extension v1.0.0. Save wines from different merchants, total up what you plan to buy per merchant, and get alerted when you reach a free-shipping threshold you set.
+Chrome extension v1.1.0. Save wines from different merchants, total up what you plan to buy per merchant, and get alerted when you reach a free-shipping threshold you set.
 
 ## Installation (Mac / Windows)
 
