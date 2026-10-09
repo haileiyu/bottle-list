@@ -69,11 +69,17 @@ $('#add').onclick=()=>editWine();
 $('#search').oninput=render;$('#sort').onchange=render;
 for(const button of document.querySelectorAll('[data-filter]'))button.onclick=()=>{filter=button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===button));render();};
 $('#backup').onclick=()=>download('bottle-list-backup.json',JSON.stringify(data,null,2),'application/json');
+$('#import').onclick=()=>$('#import-file').click();
+$('#import-file').onchange=async()=>{
+  const file=$('#import-file').files[0]; $('#import-file').value=''; if(!file)return;
+  try {const backup=JSON.parse(await file.text()),before=data.wines.length; await act({type:'import',state:backup}); const added=data.wines.length-before,skipped=backup.wines.length-added; message(`Imported ${added} wine(s).`+(skipped?` Skipped ${skipped} already in the list or invalid.`:''));}
+  catch(e){message(e instanceof SyntaxError?'This file is not a Bottle List backup':e.message);}
+};
 $('#export').onclick=()=>{
   const rows=[['Merchant','URL','Wine','Vintage','Size','Unit price','Currency','Quantity','CT community score','CT link','Stock','Counts toward threshold','Status','Updated','Notes'],...data.wines.map(w=>[data.merchants[w.merchant].name,w.url,w.name,w.vintage,w.size,w.priceCents==null?'':w.priceCents/100,w.currency,w.quantity,w.ctScore??'',w.ctUrl,w.availability,w.eligible,w.status,w.updatedAt,w.notes])];
   const quote=value=>'"'+String(value).replace(/^[=+@\-\t\r]/,s=>"'"+s).replace(/"/g,'""')+'"';
   download('bottle-list.csv','\ufeff'+rows.map(row=>row.map(quote).join(',')).join('\r\n'),'text/csv;charset=utf-8');
 };
-chrome.storage.onChanged.addListener(async(changes,area)=>{if(area==='local'&&changes.state){data=await state();render();}});
+chrome.storage.onChanged.addListener(async(changes,area)=>{if(area==='sync'){data=await state();render();}});
 render();
 if(location.hash) document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView();

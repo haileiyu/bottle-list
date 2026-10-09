@@ -1,7 +1,8 @@
-import {emptyState, titleCase} from './core.mjs';
+import {titleCase} from './core.mjs';
+import {loadState} from './storage.mjs';
 export const $ = selector => document.querySelector(selector);
 export async function state() {
-  const current = (await chrome.storage.local.get('state')).state || emptyState();
+  const current = await loadState();
   // Wines saved before names were tidied show in Title Case too; they are stored that way on their next save.
   for (const wine of current.wines) {wine.name = titleCase(wine.name); wine.size = titleCase(wine.size);}
   return current;
