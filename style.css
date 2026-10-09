@@ -1,10 +1,10 @@
-/* Bottle List — an Apple-style design tinted burgundy: the system font (SF on a Mac),
+/* Bottle List — an Apple-style design in Apple blue: the system font (SF on a Mac),
    a light grey canvas with white rounded cards, a frosted header that stays at the top,
    a big bold title, capsule buttons, a segmented control for the filters, hairline rows,
    Apple's system green / orange / red for status, and red for destructive actions.
    Fonts are system fonts, so nothing is loaded from the network. */
 :root{
-  --tint:#5a1a32;--tint-hover:#6e2340;--tint-ring:#5a1a3240;
+  --tint:#0071e3;--tint-hover:#0077ed;--tint-ring:#0071e34d;
   --bg:#f5f5f7;--paper:#fff;--fill:#7676801f;--fill-strong:#e8e8ed;--fill-hover:#dcdce1;
   --line:#e5e5ea;--line-strong:#d2d2d7;
   --ink:#1d1d1f;--muted:#6e6e73;
