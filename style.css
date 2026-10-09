@@ -69,8 +69,8 @@ h2{font-size:22px;font-weight:500;line-height:1.3;letter-spacing:-.01em;margin-b
 .merchant{background:var(--surface);border-radius:var(--radius-lg);margin-bottom:16px;overflow:hidden;scroll-margin-top:84px}
 .merchant-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:24px 24px 10px}
 .merchant-head h2{font-size:26px;letter-spacing:-.02em}
-.merchant-head .tiny{font-size:13px;color:var(--muted);text-decoration:none}
-.merchant-head .tiny:hover{color:var(--ink)}
+.merchant-head h2 a{text-decoration:none}
+.merchant-head h2 a:hover{text-decoration:underline;text-decoration-thickness:1px}
 .merchant-head .actions button{background:transparent;padding:0 0 0 8px;height:auto}
 .merchant-head .actions button:hover{color:var(--muted)}
 .merchant-head .actions button::after{content:" ›"}

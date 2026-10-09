@@ -21,7 +21,7 @@ function render() {
     if (!wines.length) continue;
     const card = el('section', null, 'merchant'); card.id = id;
     const head = el('div', null, 'merchant-head');
-    const title = el('div'); title.append(el('h2',m.name), link(id,'https://' + id,'muted tiny'));
+    const title = el('h2'), site = link(m.name,'https://' + id); site.title = id; title.append(site);
     const controls = el('div', null,'actions'); controls.append(el('span',t.ready ? '✓ Threshold reached' : !t.configured ? 'Threshold not set' : `${money(t.remaining,m.currency)} to go`,t.ready ? 'pill green' : 'pill'),button('Shipping settings',()=>editMerchant(id)));
     head.append(title,controls); card.append(head);
     const summary = el('div',null,'merchant-summary');
