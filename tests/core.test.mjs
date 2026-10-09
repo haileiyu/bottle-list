@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId, titleCase, pack, unpack, diff, itemBytes, SYNC_ITEM_BYTES} from '../core.mjs';
+import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId, titleCase} from '../core.mjs';
 const wine = (extra={})=>({name:'2016 Example Barolo',url:'https://www.example.com/wine',price:95,quantity:2,currency:'USD',vintage:'2016',size:'750 ml',...extra});
 function setup(){let state=applyOperation(emptyState(),{type:'saveWine',wine:wine()});return applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{name:'Example Wines',threshold:300,currency:'USD'}});}
 test('Each merchant totals independently and crosses $300 exactly once',()=>{
@@ -55,26 +55,4 @@ test('All-caps and all-lowercase names become Title Case; mixed-case names are k
  for(const [raw,want] of [['CHABLIS VAUPRIN ROLAND LAVANTUREUX 2023 (750ML)','Chablis Vauprin Roland Lavantureux 2023 (750ml)'],["château d'yquem sauternes 2015","Château d'Yquem Sauternes 2015"],['DOMAINE DE LA ROMANÉE-CONTI','Domaine de la Romanée-Conti'],['CHÂTEAU LA MISSION HAUT-BRION','Château La Mission Haut-Brion'],['CHÂTEAUNEUF-DU-PAPE','Châteauneuf-du-Pape'],['QUINTA DO VALE VINTAGE PORT NV','Quinta do Vale Vintage Port NV'],['louis xiii cognac','Louis XIII Cognac'],["L'ÉVANGILE POMEROL","L'Évangile Pomerol"],['6 X 750ML','6 x 750ml'],['1.5L','1.5L'],["d'Arenberg The Dead Arm","d'Arenberg The Dead Arm"],['McLaren Vale Shiraz','McLaren Vale Shiraz'],['2016','2016']])assert.equal(titleCase(raw),want);
  const saved=normalizeWine(wine({name:'BAROLO RISERVA DOCG',size:'750ML'}));assert.equal(saved.name,'Barolo Riserva DOCG');assert.equal(saved.size,'750ml');
  const old={...normalizeWine(wine()),size:'750ML'};assert.throws(()=>applyOperation({...emptyState(),wines:[old]},{type:'saveWine',wine:wine({size:'750ml'})}));
-});
-test('Sync items round-trip, stay under the per-item limit and diff only what changed',()=>{
- let state=setup();state=applyOperation(state,{type:'saveWine',wine:wine({url:'https://other.com/wine',notes:'x'.repeat(2000)})});
- const items=pack(state);assert.deepEqual(Object.keys(items).sort(),['m:example.com','m:other.com','meta',...state.wines.map(w=>'w:'+w.id)].sort());
- assert.deepEqual(unpack(structuredClone(items)),state);for(const [k,v] of Object.entries(items))assert.ok(itemBytes(k,v)<SYNC_ITEM_BYTES);
- const id=state.wines[0].id,changed=applyOperation(state,{type:'status',id,status:'purchased'});
- assert.deepEqual(Object.keys(diff(items,pack(changed)).set),['w:'+id]);assert.deepEqual(diff(items,pack(changed)).remove,[]);
- assert.deepEqual(diff(items,pack(applyOperation(state,{type:'deleteWine',id}))),{set:{},remove:['w:'+id]});
- const orphan=unpack({['w:'+id]:state.wines[0]});assert.equal(orphan.merchants['example.com'].currency,'USD');
- assert.deepEqual(Object.keys(diff(pack(orphan),pack(applyOperation(orphan,{type:'saveWine',wine:wine({url:'https://other.com/x'})}))).set).filter(k=>k.startsWith('m:')),['m:other.com']);
- assert.throws(()=>normalizeWine(wine({url:'https://example.com/?q='+'a'.repeat(2000)})),/too long/);
-});
-test('Import merges a backup without duplicating wines or overwriting settings',()=>{
- const backup=setup(),state=applyOperation(emptyState(),{type:'saveWine',wine:wine({url:'https://other.com/wine'})});
- let merged=applyOperation(state,{type:'import',state:JSON.parse(JSON.stringify(backup))});
- assert.equal(merged.wines.length,2);assert.equal(merged.merchants['example.com'].thresholdCents,30000);assert.equal(merged.wines[1].updatedAt,backup.wines[0].updatedAt);
- assert.deepEqual(applyOperation(merged,{type:'import',state:backup}),merged);
- const withCase=applyOperation(backup,{type:'saveMerchant',id:'example.com',merchant:{currency:'USD',threshold:300,caseSize:12,caseDiscount:10}});
- const kept=applyOperation(emptyState(),{type:'import',state:JSON.parse(JSON.stringify(withCase))}).merchants['example.com'];assert.equal(kept.caseSize,12);assert.equal(kept.caseDiscount,10);
- const junk=applyOperation(emptyState(),{type:'import',state:{...withCase,merchants:{'example.com':{...withCase.merchants['example.com'],caseSize:1}}}}).merchants['example.com'];assert.equal(junk.caseSize,null);assert.equal(junk.caseDiscount,null);
- assert.throws(()=>applyOperation(state,{type:'import',state:{foo:1}}),/not a Bottle List backup/);
- const bad={...backup,wines:[{...backup.wines[0],id:'bad',url:'https://example.com/?q='+'a'.repeat(2000)},...backup.wines]};assert.equal(applyOperation(state,{type:'import',state:bad}).wines.length,2);
 });

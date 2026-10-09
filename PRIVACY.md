@@ -12,20 +12,19 @@ Only the fields shown in the save form are kept, and only if you click save.
 
 ## What the extension stores
 
-Bottle List stores the following in Chrome's synced extension storage (`chrome.storage.sync`):
+Bottle List stores the following in Chrome's local extension storage (`chrome.storage.local`) on your computer:
 
 - the wines you save: product link, name, vintage, size, price, currency, stock status and quantity
 - anything you type in: CellarTracker scores and links, notes, and each shop's name, free-shipping threshold, case discount and notes
 - whether you have marked a wine as bought
 
-If Chrome sync is turned on with "Extensions" included, Chrome copies this data to your Google account and to other computers where you are signed in to Chrome with the same account, under Google's privacy policy. If sync is off, the data stays in Chrome on this computer.
-
 ## What the extension does not do
 
-- It does not send your data to the developer or to any server of its own; the only copy that leaves your computer is the one Chrome sync makes. There is no account, sign-in or analytics.
+- It does not send your data to the developer or to any server. There is no account, sign-in or analytics.
 - It does not sell, share or transfer your data to anyone.
 - It does not use your data for advertising, credit decisions or any purpose other than showing you your own list.
 - It does not buy anything, use your shopping carts, or store payment details or passwords.
+- It does not sync your list to other devices.
 
 ## Links you choose to open
 
@@ -41,7 +40,7 @@ When a shop's planned total reaches the threshold you set, the extension shows a
 
 ## Deleting your data
 
-You can delete any wine from the list. Removing the extension from Chrome on every computer where it is installed deletes all of its stored data. Export a backup first if you want to keep it.
+You can delete any wine from the list. Removing the extension from Chrome deletes all of its stored data. Export a backup first if you want to keep it.
 
 ## Changes and contact
 
