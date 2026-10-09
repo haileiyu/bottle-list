@@ -1,5 +1,5 @@
 import {$, state, mutate, wineFields, formData} from './shared.js';
-import {webUrl} from './core.mjs';
+import {webUrl, titleCase} from './core.mjs';
 $('#open').onclick = () => chrome.tabs.create({url: chrome.runtime.getURL('dashboard.html')});
 let draft = {};
 try {
@@ -8,6 +8,7 @@ try {
   if (tab?.id && /^https?:/.test(tab.url || '') && !/(^|\.)cellartracker\.com$/.test(new URL(tab.url).hostname)) {
     const [result] = await chrome.scripting.executeScript({target: {tabId: tab.id}, files: ['extract.js']});
     draft = result.result || {};
+    draft.name = titleCase(draft.name); draft.size = titleCase(draft.size);
   }
 } catch {}
 const current = await state();

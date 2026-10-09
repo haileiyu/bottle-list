@@ -1,6 +1,11 @@
-import {emptyState} from './core.mjs';
+import {emptyState, titleCase} from './core.mjs';
 export const $ = selector => document.querySelector(selector);
-export const state = async () => (await chrome.storage.local.get('state')).state || emptyState();
+export async function state() {
+  const current = (await chrome.storage.local.get('state')).state || emptyState();
+  // Wines saved before names were tidied show in Title Case too; they are stored that way on their next save.
+  for (const wine of current.wines) {wine.name = titleCase(wine.name); wine.size = titleCase(wine.size);}
+  return current;
+}
 export async function mutate(action) {
   const result = await chrome.runtime.sendMessage({channel: 'bottle-list', action});
   if (!result?.ok) throw new Error(result?.error || 'Save failed; reopen the extension');

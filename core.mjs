@@ -7,6 +7,33 @@ export function webUrl(value) {
   return url.href;
 }
 export const merchantId = url => new URL(webUrl(url)).hostname.toLowerCase().replace(/^www\./, '');
+// Shops write names in ALL CAPS or all lowercase; both become Title Case. A name that already
+// mixes cases is kept as the shop wrote it. Wine conventions: linking words stay lowercase
+// ("Châteauneuf-du-Pape", "Brunello di Montalcino", "Domaine de la Romanée-Conti"), labels and
+// numerals stay capitals ("NV", "DOCG", "XIII"), and sizes read "750ml" or "1.5L".
+const KEEP_UPPER = new Set(['NV', 'AOC', 'AOP', 'DOC', 'DOCG', 'IGT', 'IGP', 'AVA', 'VDP', 'VS', 'VSOP', 'XO', 'USA', 'UK', 'II', 'III', 'IV', 'VI', 'VII', 'VIII', 'IX', 'XI', 'XII', 'XIII']);
+const KEEP_LOWER = new Set(['de', 'du', 'des', 'di', 'da', 'del', 'della', 'dei', 'do', 'dos', 'von', 'van', 'und', 'and', 'of', 'the', 'et', 'y', 'e', 'au', 'aux', 'sur', 'sous', 'en', 'x']);
+const capital = text => text.charAt(0).toUpperCase() + text.slice(1);
+export function titleCase(value) {
+  const text = String(value ?? '');
+  if (!/\p{L}/u.test(text) || (text !== text.toUpperCase() && text !== text.toLowerCase())) return text;
+  let previous = '';
+  return text.toLowerCase().split(' ').map((word, index) => {
+    const [, before, core, after] = word.match(/^([^\p{L}\p{N}]*)(.*?)([^\p{L}\p{N}]*)$/u);
+    const unit = core.match(/^(\d+(?:[.,]\d+)?)?(ml|cl|l)$/);
+    let out;
+    if (KEEP_UPPER.has(core.toUpperCase())) out = core.toUpperCase();
+    else if (unit) out = (unit[1] || '') + (unit[2] === 'l' ? 'L' : unit[2]);
+    else out = core.split('-').map((part, i) => {
+      if ((index > 0 || i > 0) && (KEEP_LOWER.has(part) || (['la', 'le', 'les'].includes(part) && (i > 0 || previous === 'de')))) return part;
+      const elided = part.match(/^([dl])['’](.+)$/);
+      if (elided) return (index === 0 && i === 0 ? elided[1].toUpperCase() : elided[1]) + part[1] + capital(elided[2]);
+      return capital(part);
+    }).join('-');
+    if (core) previous = core;
+    return before + out + after;
+  }).join(' ');
+}
 export function cents(value, nullable = false) {
   if (nullable && (value === '' || value == null)) return null;
   if (value === '' || value == null || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > 10000000) throw new Error('Enter a valid non-negative amount');
@@ -14,7 +41,7 @@ export function cents(value, nullable = false) {
 }
 export function normalizeWine(input) {
   const url = webUrl(input.url);
-  const name = String(input.name || '').trim().slice(0, 500);
+  const name = titleCase(String(input.name || '').trim()).slice(0, 500);
   if (!name) throw new Error('Enter the wine name');
   const quantity = Number(input.quantity);
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) throw new Error('Quantity must be a whole number from 1 to 999');
@@ -26,7 +53,7 @@ export function normalizeWine(input) {
   if (ctUrl && !/(^|\.)cellartracker\.com$/.test(new URL(ctUrl).hostname)) throw new Error('The score source must be a CellarTracker link');
   return {
     id: input.id || crypto.randomUUID(), url, merchant: merchantId(url), name,
-    vintage: String(input.vintage || '').slice(0, 20), size: String(input.size || '750 ml').slice(0, 40),
+    vintage: String(input.vintage || '').slice(0, 20), size: titleCase(String(input.size || '750 ml')).slice(0, 40),
     priceCents: cents(input.price, true), currency, quantity, ctScore: score, ctUrl,
     eligible: input.eligible !== false, availability: ['unknown', 'in', 'out'].includes(input.availability) ? input.availability : 'unknown',
     status: input.status === 'purchased' ? 'purchased' : 'watching',
@@ -56,7 +83,7 @@ export function applyOperation(state, action) {
   if (action.type === 'saveWine') {
     const wine = normalizeWine(action.wine);
     if (action.wine.id && !next.wines.some(w => w.id === action.wine.id)) throw new Error('This wine has been deleted; reopen the list');
-    const duplicate = next.wines.find(w => w.url === wine.url && w.status === 'watching' && w.id !== wine.id && w.vintage === wine.vintage && w.size === wine.size);
+    const duplicate = next.wines.find(w => w.url === wine.url && w.status === 'watching' && w.id !== wine.id && w.vintage === wine.vintage && titleCase(w.size) === wine.size);
     if (duplicate && !action.wine.id) throw new Error('A wine with this link, vintage and size is already saved. Change its quantity or price in the list.');
     const index = next.wines.findIndex(w => w.id === wine.id);
     if (index < 0) next.wines.push(wine); else next.wines[index] = wine;

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId} from '../core.mjs';
+import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId, titleCase} from '../core.mjs';
 const wine = (extra={})=>({name:'2016 Example Barolo',url:'https://www.example.com/wine',price:95,quantity:2,currency:'USD',vintage:'2016',size:'750 ml',...extra});
 function setup(){let state=applyOperation(emptyState(),{type:'saveWine',wine:wine()});return applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{name:'Example Wines',threshold:300,currency:'USD'}});}
 test('Each merchant totals independently and crosses $300 exactly once',()=>{
@@ -50,4 +50,9 @@ test('Case discount settings are validated and legacy merchants still total',()=
  const cleared=save({caseSize:'',caseDiscount:''});assert.equal(cleared.merchants['example.com'].caseSize,null);assert.equal(totals(cleared,'example.com').caseConfigured,false);
  const legacy=structuredClone(state);delete legacy.merchants['example.com'].caseSize;delete legacy.merchants['example.com'].caseDiscount;
  const t=totals(legacy,'example.com');assert.equal(t.total,19000);assert.equal(t.discount,0);assert.equal(t.bottlesToCase,null);
+});
+test('All-caps and all-lowercase names become Title Case; mixed-case names are kept',()=>{
+ for(const [raw,want] of [['CHABLIS VAUPRIN ROLAND LAVANTUREUX 2023 (750ML)','Chablis Vauprin Roland Lavantureux 2023 (750ml)'],["château d'yquem sauternes 2015","Château d'Yquem Sauternes 2015"],['DOMAINE DE LA ROMANÉE-CONTI','Domaine de la Romanée-Conti'],['CHÂTEAU LA MISSION HAUT-BRION','Château La Mission Haut-Brion'],['CHÂTEAUNEUF-DU-PAPE','Châteauneuf-du-Pape'],['QUINTA DO VALE VINTAGE PORT NV','Quinta do Vale Vintage Port NV'],['louis xiii cognac','Louis XIII Cognac'],["L'ÉVANGILE POMEROL","L'Évangile Pomerol"],['6 X 750ML','6 x 750ml'],['1.5L','1.5L'],["d'Arenberg The Dead Arm","d'Arenberg The Dead Arm"],['McLaren Vale Shiraz','McLaren Vale Shiraz'],['2016','2016']])assert.equal(titleCase(raw),want);
+ const saved=normalizeWine(wine({name:'BAROLO RISERVA DOCG',size:'750ML'}));assert.equal(saved.name,'Barolo Riserva DOCG');assert.equal(saved.size,'750ml');
+ const old={...normalizeWine(wine()),size:'750ML'};assert.throws(()=>applyOperation({...emptyState(),wines:[old]},{type:'saveWine',wine:wine({size:'750ml'})}));
 });
