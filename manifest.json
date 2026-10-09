@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bottle List",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Save wines in one click, organize your wish list by merchant, and get alerted when you reach a free-shipping threshold you set.",
   "permissions": ["activeTab", "scripting", "storage", "notifications"],
   "background": {"service_worker": "background.js", "type": "module"},
