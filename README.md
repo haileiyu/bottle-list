@@ -59,6 +59,7 @@ Plain JavaScript / CSS, Manifest V3, no dependencies to install, no build step. 
 - `extract.js`: reads product info from the current page.
 - `popup.*`: save and update entry point.
 - `dashboard.*`: list, editing, filtering, export.
+- `store/`: Chrome Web Store listing text (`LISTING.md`), images, and `build-zip.sh`, which builds the upload zip in `dist/`. The privacy policy is `PRIVACY.md`.
 
 Run `node --test tests/*.test.mjs`: 13 tests pass, covering amount totals, case discounts, currency separation, threshold notification state, duplicate entries and page metadata extraction. JavaScript syntax checks pass.
 
