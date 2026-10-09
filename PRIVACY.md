@@ -6,7 +6,7 @@ Bottle List is a Chrome extension for keeping a personal list of wines you plan 
 
 ## What the extension reads
 
-When you click the Bottle List icon on a web page, the extension reads that page once to fill in the save form. It looks for the product name, link, price, currency, stock status, vintage and bottle size. It does not read pages you have not clicked it on, and it does not run in the background on the sites you visit.
+When you click the Bottle List icon on a web page, the extension reads that page once to fill in the save form. It looks for the product name, link, price, currency, stock status, vintage and bottle size in the page's product data. It also scans the page's visible text for free-shipping wording; that text is not shown, saved or sent anywhere. It does not read pages you have not clicked it on, and it does not run in the background on the sites you visit.
 
 Only the fields shown in the save form are kept, and only if you click save.
 

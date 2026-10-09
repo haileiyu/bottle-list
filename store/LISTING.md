@@ -64,7 +64,7 @@ https://github.com/haileiyu/bottle-list
 https://github.com/haileiyu/bottle-list/issues
 ```
 
-**Mature content:** turn this on. The store's rules treat alcohol as a regulated product, and marking the listing as mature limits it to signed-in adults.
+**Mature content:** your choice. The store's rules treat alcohol as a regulated product, so marking the listing as mature lowers the risk of rejection. The tradeoff is that only signed-in adult Google accounts can then see and install it.
 
 ## 3. Privacy tab
 
@@ -85,7 +85,7 @@ When the user clicks the extension icon on a wine's product page, activeTab give
 scripting:
 
 ```
-Used with activeTab to run one script (extract.js, included in the package) in the current tab after the user clicks the icon. The script reads the page's product data (JSON-LD and product meta tags) and returns it to the popup. It does not change the page.
+Used with activeTab to run one script (extract.js, included in the package) in the current tab after the user clicks the icon. The script reads the page's product data (JSON-LD and product meta tags) and returns it to the popup. It also scans the page's visible text for free-shipping wording, which is not shown, saved or sent anywhere. It does not change the page.
 ```
 
 storage:
