@@ -43,7 +43,7 @@ function render() {
       const qty = el('td'); const input = el('input'); input.type='number'; input.className='quantity'; input.value=w.quantity; input.min=1; input.max=999; input.setAttribute('aria-label',`${w.name} quantity`);
       input.onchange = async()=>{if(!input.reportValidity())return; input.disabled=true; try {await act({type:'saveWine',wine:{...w,price:w.priceCents == null?'':w.priceCents/100,quantity:input.value}});}catch(e){message(e.message);input.value=w.quantity;input.disabled=false;}}; qty.append(input);
       const score = el('td'); score.append(link(w.ctScore == null ? 'Find score ↗' : w.ctScore.toFixed(1),w.ctUrl || ctSearch(w.name + ' ' + w.vintage),w.ctScore == null ? 'tiny' : 'score'));
-      if(w.ctScore!=null) score.append(el('small',w.ctUrl?'Manual · Source ↗':'Manual · No source','muted tiny'));
+      if(w.ctScore!=null) score.append(el('small',[w.ctNotes==null?'':`${w.ctNotes} note${w.ctNotes===1?'':'s'}`,w.ctUrl?'Source ↗':'No source'].filter(Boolean).join(' · '),'muted tiny'));
       const price = el('td'), findPrice = el('small'); findPrice.append(link('Find price ↗',wsSearch(w.name,w.vintage),'tiny')); price.append(money(w.priceCents,w.currency),findPrice);
       const [statusText,statusDot] = w.status==='purchased'?['Purchased','done']:w.availability==='out'?['Out of stock','bad']:!w.eligible?['Not counted','']:w.priceCents==null?['Price needed','warn']:w.currency!==m.currency?['Currency mismatch','warn']:w.availability==='unknown'?['Stock unverified','warn']:['To buy','ok'];
       const status = el('td'); status.append(el('span',statusText,'status ' + statusDot),el('small',new Date(w.updatedAt).toLocaleDateString('en-US'),'muted'));
@@ -71,7 +71,7 @@ $('#search').oninput=render;$('#sort').onchange=render;
 for(const button of document.querySelectorAll('[data-filter]'))button.onclick=()=>{filter=button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===button));render();};
 $('#backup').onclick=()=>download('bottle-list-backup.json',JSON.stringify(data,null,2),'application/json');
 $('#export').onclick=()=>{
-  const rows=[['Merchant','URL','Wine','Vintage','Size','Unit price','Currency','Quantity','CT community score','CT link','Stock','Counts toward threshold','Status','Updated','Notes'],...data.wines.map(w=>[data.merchants[w.merchant].name,w.url,w.name,w.vintage,w.size,w.priceCents==null?'':w.priceCents/100,w.currency,w.quantity,w.ctScore??'',w.ctUrl,w.availability,w.eligible,w.status,w.updatedAt,w.notes])];
+  const rows=[['Merchant','URL','Wine','Vintage','Size','Unit price','Currency','Quantity','CT community score','CT notes','CT link','Stock','Counts toward threshold','Status','Updated','Notes'],...data.wines.map(w=>[data.merchants[w.merchant].name,w.url,w.name,w.vintage,w.size,w.priceCents==null?'':w.priceCents/100,w.currency,w.quantity,w.ctScore??'',w.ctNotes??'',w.ctUrl,w.availability,w.eligible,w.status,w.updatedAt,w.notes])];
   const quote=value=>'"'+String(value).replace(/^[=+@\-\t\r]/,s=>"'"+s).replace(/"/g,'""')+'"';
   download('bottle-list.csv','\ufeff'+rows.map(row=>row.map(quote).join(',')).join('\r\n'),'text/csv;charset=utf-8');
 };

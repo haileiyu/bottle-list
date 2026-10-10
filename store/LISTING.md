@@ -21,13 +21,13 @@ HOW IT WORKS
 • Open a wine's product page and click the Bottle List icon. The extension fills in the name, vintage, size, price and stock from the page so you can check them and save.
 • Your list is grouped by shop. Each shop shows its subtotal, how much is left to reach its free-shipping threshold, and a progress bar.
 • Set a case discount for a shop (for example 10% off 12 or more bottles). Bottle List shows the discount once you reach it, or how many more bottles you need.
-• Add your own notes, target prices and CellarTracker community scores, with quick links to look a wine up on CellarTracker or compare prices on Wine-Searcher.
+• Add your own notes, target prices and CellarTracker community scores, with quick links to look a wine up on CellarTracker or compare prices on Wine-Searcher. On a wine's CellarTracker page, click the Bottle List icon to fill in its community average and number of notes, and choose which saved wine it belongs to.
 • Edit quantities right in the list, mark wines as bought, and export your list as CSV or a JSON backup.
 
 WHAT IT DOES NOT DO
 • Bottle List does not sell wine, does not place orders and does not touch your shopping carts. You order from the shop yourself.
 • It does not check prices in the background. Prices and stock are saved when you save the wine; open the product page again to refresh them.
-• Scores are entered by you. Bottle List is not affiliated with CellarTracker or Wine-Searcher.
+• It does not look up scores by itself. A score is read only from a CellarTracker page you have open when you click the icon, and you confirm it before it is saved. Bottle List is not affiliated with CellarTracker or Wine-Searcher.
 
 PRIVATE BY DESIGN
 Your list stays in Chrome, and follows you to your other computers through Chrome sync if you have it on. There is no separate account, no server and no tracking. The extension reads a page only when you click its icon.
@@ -79,13 +79,13 @@ Bottle List keeps a personal list of wines the user plans to buy from online sho
 activeTab:
 
 ```
-When the user clicks the extension icon on a wine's product page, activeTab gives temporary access to that one tab so the extension can read the product name, price and stock to fill in the save form. No other tabs or sites are accessed.
+When the user clicks the extension icon on a wine's product page, activeTab gives temporary access to that one tab so the extension can read the product name, price and stock to fill in the save form, or, on a CellarTracker wine page, the community average score and number of notes. No other tabs or sites are accessed.
 ```
 
 scripting:
 
 ```
-Used with activeTab to run one script (extract.js, included in the package) in the current tab after the user clicks the icon. The script reads the page's product data (JSON-LD and product meta tags) and returns it to the popup. It also scans the page's visible text for free-shipping wording, which is not shown, saved or sent anywhere. It does not change the page.
+Used with activeTab to run one script included in the package in the current tab after the user clicks the icon. On a shop page, extract.js reads the page's product data (JSON-LD and product meta tags) and returns it to the popup. It also scans the page's visible text for free-shipping wording, which is not shown, saved or sent anywhere. On a CellarTracker wine page, extract-ct.js reads the wine name, the community average score and the number of notes instead. Neither script changes the page.
 ```
 
 storage:
@@ -104,7 +104,7 @@ Shows a notification when the total of the wines saved for one shop reaches the 
 
 **Are you using remote code?** No, I am not using remote code.
 
-**Data usage.** Tick only **Website content**: the extension reads product details from the page the user clicks it on and stores them in Chrome's own extension storage (synced by Chrome if the user has sync on). Leave every other category unticked. The extension handles no names, emails, payment details, passwords, location or browsing history.
+**Data usage.** Tick only **Website content**: the extension reads product details (or, on CellarTracker, a wine's community score) from the page the user clicks it on and stores them in Chrome's own extension storage (synced by Chrome if the user has sync on). Leave every other category unticked. The extension handles no names, emails, payment details, passwords, location or browsing history.
 
 Tick all three certifications:
 
@@ -132,5 +132,6 @@ No account or login is needed.
 2. Check the filled-in fields and click "Add to wish list". If the page has no product markup, the price is left blank and can be typed in.
 3. Click "My list" to see the saved wine grouped by shop. Click "Shipping settings" on the shop, enter a threshold at or below the current total (for example 1), and save; a "Threshold reached" notification appears and the icon shows a badge.
 4. In "Shipping settings", enter a case discount (for example 2 items, 10%) and set the wine's quantity to 2 to see the discount applied.
+5. Optional: open any wine's page on cellartracker.com (wine.asp?iWine=...) and click the icon. The popup shows the page's community average and number of notes; choose the saved wine and click "Attach score".
 All data is kept in chrome.storage.sync. The extension does not buy anything or contact any server of its own.
 ```

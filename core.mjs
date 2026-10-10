@@ -40,6 +40,16 @@ export function cents(value, nullable = false) {
   if (value === '' || value == null || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > 10000000) throw new Error('Enter a valid non-negative amount');
   return Math.round(Number(value) * 100);
 }
+function ctFields(input) {
+  const blank = value => value === '' || value == null;
+  const ctScore = blank(input.ctScore) ? null : Number(input.ctScore);
+  if (ctScore != null && (!Number.isFinite(ctScore) || ctScore < 50 || ctScore > 100)) throw new Error('CT score must be between 50 and 100; leave blank if there is none');
+  const ctNotes = blank(input.ctNotes) ? null : Number(input.ctNotes);
+  if (ctNotes != null && (!Number.isInteger(ctNotes) || ctNotes < 0 || ctNotes > 1000000)) throw new Error('CT notes count must be a whole number; leave blank if unknown');
+  const ctUrl = input.ctUrl ? webUrl(input.ctUrl) : '';
+  if (ctUrl && !/(^|\.)cellartracker\.com$/.test(new URL(ctUrl).hostname)) throw new Error('The score source must be a CellarTracker link');
+  return {ctScore, ctNotes, ctUrl};
+}
 export function normalizeWine(input) {
   const url = webUrl(input.url);
   const name = titleCase(String(input.name || '').trim()).slice(0, 500);
@@ -48,14 +58,11 @@ export function normalizeWine(input) {
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) throw new Error('Quantity must be a whole number from 1 to 999');
   const currency = String(input.currency || '').toUpperCase();
   if (!['USD', 'EUR', 'GBP', 'CAD', 'HKD', 'JPY', 'AUD'].includes(currency)) throw new Error('Choose a currency');
-  const score = input.ctScore === '' || input.ctScore == null ? null : Number(input.ctScore);
-  if (score != null && (!Number.isFinite(score) || score < 50 || score > 100)) throw new Error('CT score must be between 50 and 100; leave blank if there is none');
-  const ctUrl = input.ctUrl ? webUrl(input.ctUrl) : '';
-  if (ctUrl && !/(^|\.)cellartracker\.com$/.test(new URL(ctUrl).hostname)) throw new Error('The score source must be a CellarTracker link');
+  const {ctScore, ctNotes, ctUrl} = ctFields(input);
   return {
     id: input.id || crypto.randomUUID(), url, merchant: merchantId(url), name,
     vintage: String(input.vintage || '').slice(0, 20), size: titleCase(String(input.size || '750 ml')).slice(0, 40),
-    priceCents: cents(input.price, true), currency, quantity, ctScore: score, ctUrl,
+    priceCents: cents(input.price, true), currency, quantity, ctScore, ctNotes, ctUrl,
     eligible: input.eligible !== false, availability: ['unknown', 'in', 'out'].includes(input.availability) ? input.availability : 'unknown',
     status: input.status === 'purchased' ? 'purchased' : 'watching',
     notes: String(input.notes || '').slice(0, 2000), updatedAt: new Date().toISOString()
@@ -104,9 +111,27 @@ export function applyOperation(state, action) {
     const wine = next.wines.find(w => w.id === action.id);
     if (!wine) throw new Error('Wine not found');
     wine.status = action.status === 'purchased' ? 'purchased' : 'watching';
+  } else if (action.type === 'setScore') {
+    // Only the CT fields change; the rest of the saved wine is kept as stored.
+    const wine = next.wines.find(w => w.id === action.id);
+    if (!wine) throw new Error('This wine has been deleted; reopen the list');
+    const fields = ctFields(action);
+    if (fields.ctScore == null) throw new Error('Enter the CT community score');
+    Object.assign(wine, fields, {updatedAt: new Date().toISOString()});
   } else if (action.type === 'deleteWine') next.wines = next.wines.filter(w => w.id !== action.id);
   else throw new Error('Unknown action');
   return next;
+}
+// Orders the wines on the wish list by how well they match a CellarTracker page: same vintage first, then shared name words.
+const words = text => new Set(String(text || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(w => w.length > 1 && !/^(?:19|20)\d{2}$/.test(w)));
+export const sameVintage = (a, b) => String(a || '').trim().toUpperCase() === String(b || '').trim().toUpperCase();
+export function rankForScore(wines, page) {
+  const target = words(page.name);
+  const match = w => {
+    const own = words(w.name);
+    return (page.vintage && sameVintage(w.vintage, page.vintage) ? 1 : 0) + [...target].filter(t => own.has(t)).length / Math.max(1, target.size);
+  };
+  return wines.filter(w => w.status === 'watching').map(w => [match(w), w]).sort((a, b) => b[0] - a[0] || b[1].updatedAt.localeCompare(a[1].updatedAt)).map(([, w]) => w);
 }
 export function notificationTransitions(state) {
   const events = [];

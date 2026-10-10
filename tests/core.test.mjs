@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId, titleCase, pack, unpack, diff, itemBytes, mergeState, SYNC_ITEM_BYTES} from '../core.mjs';
+import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId, titleCase, rankForScore, pack, unpack, diff, itemBytes, mergeState, SYNC_ITEM_BYTES} from '../core.mjs';
 const wine = (extra={})=>({name:'2016 Example Barolo',url:'https://www.example.com/wine',price:95,quantity:2,currency:'USD',vintage:'2016',size:'750 ml',...extra});
 function setup(){let state=applyOperation(emptyState(),{type:'saveWine',wine:wine()});return applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{name:'Example Wines',threshold:300,currency:'USD'}});}
 test('Each merchant totals independently and crosses $300 exactly once',()=>{
@@ -72,4 +72,19 @@ test('Merging a local list into a synced one adds missing wines and keeps synced
  const merged=mergeState(synced,local);
  assert.equal(merged.wines.length,2);assert.equal(merged.merchants['example.com'].thresholdCents,30000);assert.ok(merged.merchants['other.com']);
  assert.deepEqual(mergeState(merged,local),merged);assert.equal(synced.wines.length,1);
+});
+test('Attaching a CT score keeps price, quantity and merchant, and later saves keep the note count',()=>{
+ let state=setup();const id=state.wines[0].id;
+ state=applyOperation(state,{type:'setScore',id,ctScore:'93.4',ctNotes:'41',ctUrl:'https://www.cellartracker.com/wine.asp?iWine=1'});
+ const w=state.wines[0];assert.equal(w.priceCents,9500);assert.equal(w.quantity,2);assert.equal(w.merchant,'example.com');assert.equal(w.ctScore,93.4);assert.equal(w.ctNotes,41);
+ state=applyOperation(state,{type:'saveWine',wine:{...w,price:w.priceCents/100,quantity:3}});assert.equal(state.wines[0].ctNotes,41);assert.equal(state.wines[0].ctUrl,'https://www.cellartracker.com/wine.asp?iWine=1');
+ for(const patch of [{ctScore:''},{ctScore:101},{ctNotes:1.5},{ctNotes:-1},{ctUrl:'https://cellartracker.com.evil.test/a'}])assert.throws(()=>applyOperation(state,{type:'setScore',id,ctScore:90,...patch}));
+ assert.throws(()=>applyOperation(state,{type:'setScore',id:'gone',ctScore:90}),/deleted/);
+});
+test('CT page matches rank the same vintage and closest name first, ignoring accents',()=>{
+ let state=emptyState();
+ for(const patch of [{name:'Chateau Pontet-Canet Pauillac',vintage:'2010',url:'https://a.com/1'},{name:'Chateau Pontet-Canet Pauillac',vintage:'2009',url:'https://a.com/2'},{name:'Ridge Monte Bello',vintage:'2009',url:'https://a.com/3'}])state=applyOperation(state,{type:'saveWine',wine:wine(patch)});
+ state=applyOperation(state,{type:'status',id:state.wines[2].id,status:'purchased'});
+ const ranked=rankForScore(state.wines,{name:'2009 Château Pontet-Canet',vintage:'2009'});
+ assert.deepEqual(ranked.map(w=>w.url),['https://a.com/2','https://a.com/1']);
 });

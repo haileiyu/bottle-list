@@ -24,3 +24,20 @@ test('Aggregate low price and list pages leave price blank',()=>{
 test('Product meta fallback keeps shipping hints separate from item price',()=>{
  const result=extract({}, {meta:{'og:title':'Wine 2015','product:price:amount':'129.99','product:price:currency':'USD'},body:'Free shipping on orders over $300. Sale $100.'});assert.equal(result.price,'129.99');assert.equal(result.currency,'USD');assert.equal(result.shippingHints.length,1);
 });
+const ctCode=readFileSync(new URL('../extract-ct.js',import.meta.url),'utf8');
+function extractCt({url='https://www.cellartracker.com/wine.asp?iWine=874157',title='2009 Château Pontet-Canet, France, Bordeaux, Pauillac - CellarTracker',description='',body=''}={}) {
+  const document={title,body:{innerText:body},querySelector:s=>s.startsWith('meta')?(description?{content:description}:null):null};
+  return vm.runInNewContext(ctCode,{document,location:{href:url},URL});
+}
+test('CellarTracker page: reads the community average and note count from either wording',()=>{
+ const a=extractCt({description:'Average of 95.4 points in 641 community wine reviews on 2009 Château Pontet-Canet'});
+ assert.deepEqual({...a},{iWine:'874157',url:'https://www.cellartracker.com/wine.asp?iWine=874157',name:'2009 Château Pontet-Canet',vintage:'2009',score:'95.4',notes:'641'});
+ const b=extractCt({url:'https://www.cellartracker.com/notes.asp?iWine=9353&foo=1',title:'Community Tasting Notes - NV Opus One Overture - CellarTracker',body:'Community Tasting Notes (average 92.3 pts. and 1,429 notes)'});
+ assert.equal(b.score,'92.3');assert.equal(b.notes,'1429');assert.equal(b.name,'NV Opus One Overture');assert.equal(b.vintage,'NV');assert.equal(b.url,'https://www.cellartracker.com/wine.asp?iWine=9353');
+});
+test('CellarTracker page: ignores critic and personal scores, and pages without a wine',()=>{
+ const a=extractCt({body:'WA 98 points. My score 99 pts. Robert Parker average 97 points. Community Tasting Notes (average 94.1 pts. and 12 notes)'});
+ assert.equal(a.score,'94.1');assert.equal(a.notes,'12');
+ const none=extractCt({body:'WA 98 points. My score 99 pts.'});assert.equal(none.score,'');assert.equal(none.notes,'');assert.equal(none.iWine,'874157');
+ assert.deepEqual({...extractCt({url:'https://www.cellartracker.com/list.asp?szSearch=pontet'})},{});
+});

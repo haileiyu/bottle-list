@@ -147,8 +147,6 @@ dialog::backdrop{background:#33333380}
 .popup #message:empty{display:none}
 .popup .form-grid{grid-template-columns:repeat(4,1fr)}
 .popup .form-grid .wide{grid-column:span 2}
-.popup .form-grid label:has([name=ctUrl]){grid-column:span 1}
-.popup .form-grid label:has([name=notes]){grid-column:1/-1}
 .popup .form-grid label{justify-content:flex-end}
 .popup #message{font-size:13px}
 .popup label{margin-bottom:11px}
@@ -156,6 +154,8 @@ dialog::backdrop{background:#33333380}
 .popup select{padding-right:32px}
 .popup .tiny{margin:10px 0 0;text-align:center}
 .popup .lookups{margin-bottom:6px}
+.popup .ct-page{font-family:var(--display);font-size:15px;color:var(--heading);margin-bottom:12px}
+.popup .ct-warning:empty{display:none}
 
 @media(max-width:850px){
   .bar,.app{padding:0 16px}

@@ -39,7 +39,7 @@ export function wineFields(form, wine = {}) {
     ['price', 'Unit price', 'number'], ['quantity', 'Quantity (in the size above)', 'number', true],
     ['currency', 'Currency', ['USD','EUR','GBP','CAD','HKD','JPY','AUD']],
     ['availability', 'Stock', [['unknown','Unverified'],['in','In stock'],['out','Out of stock']]],
-    ['ctScore', 'CellarTracker community score', 'number'], ['ctUrl', 'CellarTracker source link', 'url'],
+    ['ctScore', 'CellarTracker community score', 'number'], ['ctNotes', 'Number of CT notes', 'number'], ['ctUrl', 'CellarTracker source link', 'url'],
     ['notes', 'Notes · Target price / promo code', 'text']
   ];
   const grid = element('div', null, 'form-grid');
@@ -51,7 +51,7 @@ export function wineFields(form, wine = {}) {
       const [value, text] = Array.isArray(option) ? option : [option, option];
       const el = element('option', text); el.value = value; input.append(el);
     } else input.type = type;
-    if (type === 'number') {input.min = name === 'quantity' ? '1' : name === 'ctScore' ? '50' : '0'; input.step = name === 'quantity' ? '1' : '0.01'; input.max = name === 'quantity' ? '999' : name === 'ctScore' ? '100' : '10000000';}
+    if (type === 'number') {input.min = name === 'quantity' ? '1' : name === 'ctScore' ? '50' : '0'; input.step = ['quantity', 'ctNotes'].includes(name) ? '1' : '0.01'; input.max = name === 'quantity' ? '999' : name === 'ctScore' ? '100' : name === 'ctNotes' ? '1000000' : '10000000';}
     if (name === 'quantity') input.value = wine.quantity || 1;
     else if (name === 'price') input.value = wine.priceCents != null ? wine.priceCents / 100 : (wine.price ?? '');
     else if (name === 'currency') input.value = wine.currency || 'USD';
@@ -64,7 +64,7 @@ export function wineFields(form, wine = {}) {
   form.append(grid);
   const check = element('label', null, 'checkbox'); const input = element('input'); input.type = 'checkbox'; input.name = 'eligible'; input.checked = wine.eligible !== false;
   check.append(input, document.createTextNode('Count this wine toward free shipping')); form.append(check);
-  const hint = element('p', 'Check the wine name and vintage before entering a CT score. Wines with unknown price, no stock or a mismatched currency do not count toward the threshold.', 'muted tiny'); form.append(hint);
+  const hint = element('p', 'Check the wine name and vintage before entering a CT score, or save first, then click Bottle List on the wine\'s CellarTracker page to fill it in. Wines with unknown price, no stock or a mismatched currency do not count toward the threshold.', 'muted tiny'); form.append(hint);
   const lookups = element('div', null, 'lookups');
   lookups.append(link('Find this wine on CellarTracker →', ctSearch(wine.name || ''), 'ct-search'), link('Find prices on Wine-Searcher →', wsSearch(wine.name || '', wine.vintage || ''), 'ws-search'));
   form.append(lookups);
