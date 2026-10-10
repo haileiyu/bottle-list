@@ -35,6 +35,42 @@ export function titleCase(value) {
     return before + out + after;
   }).join(' ');
 }
+// Names read "<vintage> <producer> <wine>", like CellarTracker's. A leading year or NV is the vintage slot;
+// otherwise the word equal to the vintage moves there. Other years stay put ("Cuvée 1855").
+const fold = text => String(text ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+const bare = word => word.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+const isVintage = word => /^(?:(?:19|20)\d{2}|NV)$/i.test(bare(word));
+const tidy = words => words.join(' ').replace(/\(\s*\)/g, '').replace(/^[\s,;:–—-]+|[\s,;:–—-]+$/g, '').replace(/\s+([,;:])/g, '$1').replace(/\s+/g, ' ');
+export function vintageFirst(name, vintage) {
+  const text = String(name ?? '').replace(/\s+/g, ' ').trim(), v = String(vintage ?? '').trim().toUpperCase();
+  if (!text || !/^(?:(?:19|20)\d{2}|NV)$/.test(v)) return text;
+  const words = text.split(' ');
+  const at = isVintage(words[0]) ? 0 : words.findIndex(w => bare(w).toUpperCase() === v);
+  if (at >= 0) words.splice(at, 1);
+  const rest = tidy(words);
+  return rest ? v + ' ' + rest : text;
+}
+// Moves the producer (the shop's "brand") right after the vintage, in the brand's spelling, when the
+// name contains it as whole words; a hyphen and a space count as the same. Otherwise the name is kept.
+export function producerFirst(name, producer, vintage, shop = '') {
+  const pieces = text => fold(text).split(/[\s-]+/).map(bare).filter(Boolean);
+  const want = pieces(producer), text = vintageFirst(name, vintage);
+  const shopWords = pieces(String(shop).replace(/^www\./, '').replace(/\.[a-z.]+$/, '').replace(/[.]/g, ' '));
+  if (!want.length || (shopWords.length && want.join('') === shopWords.join(''))) return text;
+  const words = text.split(' ');
+  const start = isVintage(words[0]) ? 1 : 0;
+  for (let i = start; i < words.length; i++) {
+    const got = [];
+    for (let j = i; j < words.length && got.length < want.length; j++) {
+      got.push(...pieces(words[j]));
+      if (got.join(' ') === want.join(' ')) {
+        const rest = tidy([...words.slice(start, i), ...words.slice(j + 1)]);
+        return [...words.slice(0, start), String(producer).trim(), rest].filter(Boolean).join(' ');
+      }
+    }
+  }
+  return text;
+}
 // Words in a shop's name that CellarTracker's own wine names leave out (vintage, size, colour,
 // classification, "Domaine"). Searching with them can come back empty, so search links drop them.
 const SEARCH_DROP = new Set(['rouge', 'blanc', 'rosso', 'bianco', 'tinto', 'blanco', 'nv', 'aoc', 'aop', 'doc', 'docg', 'igt', 'igp', 'ava', 'domaine', 'chateau', 'maison', 'weingut', 'bottle', 'magnum']);
@@ -60,7 +96,7 @@ function ctFields(input) {
 }
 export function normalizeWine(input) {
   const url = webUrl(input.url);
-  const name = titleCase(String(input.name || '').trim()).slice(0, 500);
+  const name = vintageFirst(titleCase(String(input.name || '').trim()), input.vintage).slice(0, 500);
   if (!name) throw new Error('Enter the wine name');
   const quantity = Number(input.quantity);
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) throw new Error('Quantity must be a whole number from 1 to 999');
@@ -125,6 +161,11 @@ export function applyOperation(state, action) {
     if (!wine) throw new Error('This wine has been deleted; reopen the list');
     const fields = ctFields(action);
     if (fields.ctScore == null) throw new Error('Enter the CT community score');
+    // Optionally takes CellarTracker's name for the wine, with the saved wine's vintage in front.
+    if (action.name != null) {
+      fields.name = vintageFirst(titleCase(String(action.name).trim()), wine.vintage).slice(0, 500);
+      if (!fields.name) throw new Error('Enter the wine name');
+    }
     Object.assign(wine, fields, {updatedAt: new Date().toISOString()});
   } else if (action.type === 'deleteWine') next.wines = next.wines.filter(w => w.id !== action.id);
   else throw new Error('Unknown action');

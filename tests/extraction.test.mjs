@@ -45,3 +45,8 @@ test('CellarTracker page: the tasting-notes count wins over the review count',()
  const a=extractCt({description:'Average of 89.9 points in 909 community wine reviews',body:'Community Tasting Notes (average 90.1 pts. and 429 notes)'});
  assert.equal(a.score,'90.1');assert.equal(a.notes,'429');
 });
+test('Reads the producer from the product brand when the shop tags one',()=>{
+ assert.equal(extract({'@type':'Product',name:'Dureuil Janthial 2023 Rully Rouge',brand:{'@type':'Brand',name:'Dureuil-Janthial'},offers:{price:'45'}}).producer,'Dureuil-Janthial');
+ assert.equal(extract({'@type':'Product',name:'Wine',brand:'Ridge',offers:{price:'45'}}).producer,'Ridge');
+ assert.equal(extract({'@type':'Product',name:'Wine',offers:{price:'45'}}).producer,'');
+});

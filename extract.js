@@ -28,8 +28,11 @@
   const price = /^\d+(\.\d{1,2})?$/.test(normalized) ? normalized : '';
   const currency = String(offer.priceCurrency || meta('product:price:currency') || '').toUpperCase();
   const availability = /OutOfStock|SoldOut|Discontinued/i.test(offer.availability || '') ? 'out' : /InStock|LimitedAvailability/i.test(offer.availability || '') ? 'in' : 'unknown';
+  // The producer, when the shop tags one. Some shops put their own name or an importer here, so the popup checks it against the name.
+  const brand = [].concat(product?.brand || product?.manufacturer || [])[0];
+  const producer = String((typeof brand === 'string' ? brand : brand?.name) || '').replace(/\s+/g, ' ').trim().slice(0, 200);
   const body = document.body?.innerText || '';
   const shippingHints = [...body.matchAll(/[^\n.]{0,65}(?:free shipping|free delivery|免运费)[^\n.]{0,100}/gi)].slice(0, 3).map(m => m[0].trim());
-  return {name, url: location.href, price, currency, availability, vintage: name.match(/\b(?:19|20)\d{2}\b/)?.[0] || '', size: name.match(/\b(?:\d{2,4}\s?ml|\d(?:\.\d+)?\s?[lL])\b/)?.[0] || '',
+  return {name, url: location.href, producer, price, currency, availability, vintage: name.match(/\b(?:19|20)\d{2}\b/)?.[0] || '', size: name.match(/\b(?:\d{2,4}\s?ml|\d(?:\.\d+)?\s?[lL])\b/)?.[0] || '',
     shippingHints, warning: ambiguous ? 'The page lists prices for several sizes; confirm the price for the selected size manually.' : price ? 'Price read from page metadata; check the vintage, size and discounts.' : 'No reliable price found; enter it manually.'};
 })();

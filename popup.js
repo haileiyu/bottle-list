@@ -1,5 +1,5 @@
 import {$, state, mutate, wineFields, formData, element} from './shared.js';
-import {webUrl, titleCase, rankForScore, sameVintage} from './core.mjs';
+import {webUrl, titleCase, vintageFirst, producerFirst, rankForScore, sameVintage} from './core.mjs';
 $('#open').onclick = () => chrome.tabs.create({url: chrome.runtime.getURL('dashboard.html')});
 let draft = {}, onCt = false, ctPage = {};
 try {
@@ -8,7 +8,10 @@ try {
     onCt = /(^|\.)cellartracker\.com$/.test(new URL(tab.url).hostname);
     const [result] = await chrome.scripting.executeScript({target: {tabId: tab.id}, files: [onCt ? 'extract-ct.js' : 'extract.js']});
     if (onCt) ctPage = result.result || {};
-    else {draft = result.result || {}; draft.name = titleCase(draft.name); draft.size = titleCase(draft.size);}
+    else {
+      draft = result.result || {}; draft.size = titleCase(draft.size);
+      draft.name = producerFirst(titleCase(draft.name), titleCase(draft.producer), draft.vintage, new URL(tab.url).hostname);
+    }
   }
 } catch {}
 const current = await state();
@@ -23,8 +26,8 @@ function saveForm() {
   const matches = current.wines.filter(w => draft.url && w.url === webUrl(draft.url) && w.status === 'watching');
   const duplicate = matches.length === 1 ? matches[0] : null;
   if (duplicate) {
-    draft = {...duplicate, ...draft, size: draft.size || duplicate.size, vintage: draft.vintage || duplicate.vintage, currency: draft.currency || duplicate.currency, priceCents: draft.price ? Number(draft.price)*100 : duplicate.priceCents};
-    $('#message').textContent = 'This link is already saved. Confirm it is the same vintage and size; saving updates the existing entry and keeps its quantity and CT score.';
+    draft = {...duplicate, ...draft, name: duplicate.name, size: draft.size || duplicate.size, vintage: draft.vintage || duplicate.vintage, currency: draft.currency || duplicate.currency, priceCents: draft.price ? Number(draft.price)*100 : duplicate.priceCents};
+    $('#message').textContent = 'This link is already saved. Confirm it is the same vintage and size; saving updates the existing entry and keeps its name, quantity and CT score.';
     $('#save').textContent = 'Update saved wine';
   }
   wineFields($('#wine-form'), draft);
@@ -61,11 +64,17 @@ function attachScore() {
   field('CT community score', number('ctScore', 50, 100, '0.01', ctPage.score));
   field('Number of CT notes', number('ctNotes', 0, 1000000, '1', ctPage.notes));
   form.append(grid);
+  // Offer CellarTracker's name, with the saved wine's vintage in front (a 2023 bottle scored from the 2022 page stays 2023).
+  const rename = element('label', null, 'checkbox'), useName = element('input'), preview = element('span');
+  useName.type = 'checkbox'; useName.checked = true; rename.append(useName, preview);
+  const ctName = ctPage.name.replace(/^(?:(?:19|20)\d{2}|NV)\s+/i, '');
   const warning = element('p', null, 'error tiny ct-warning');
-  form.append(warning, element('p', 'Read from this page\'s community average. Check it before saving; critic scores (RP / WA / JS / Vinous) do not belong here.', 'muted tiny'));
+  form.append(rename, warning, element('p', 'Read from this page\'s community average. Check it before saving; critic scores (RP / WA / JS / Vinous) do not belong here.', 'muted tiny'));
   if (!ctPage.score) $('#message').textContent = 'Could not find the community average on this page; type it in from the page.';
   const check = () => {
-    const w = wines.find(w => w.id === select.value);
+    const w = wines.find(w => w.id === select.value), name = vintageFirst(titleCase(ctName), w.vintage);
+    preview.textContent = `Rename to CellarTracker's name: ${name}`;
+    rename.hidden = !ctName || name === w.name;
     warning.textContent = [
       w.vintage && ctPage.vintage && !sameVintage(w.vintage, ctPage.vintage) ? `Vintage differs: this page is ${ctPage.vintage}, the saved wine is ${w.vintage}.` : '',
       w.ctScore != null ? `Replaces its current score of ${w.ctScore.toFixed(1)}.` : ''
@@ -76,9 +85,10 @@ function attachScore() {
     event.preventDefault(); $('#save').disabled = true;
     try {
       const data = Object.fromEntries(new FormData(form));
-      await mutate({type: 'setScore', id: data.id, ctScore: data.ctScore, ctNotes: data.ctNotes, ctUrl: ctPage.url});
+      const w = wines.find(w => w.id === data.id);
+      await mutate({type: 'setScore', id: data.id, ctScore: data.ctScore, ctNotes: data.ctNotes, ctUrl: ctPage.url, name: !rename.hidden && useName.checked ? ctName : undefined});
       $('#message').className = 'success';
-      $('#message').textContent = `Score attached to ${select.selectedOptions[0].textContent}.`;
+      $('#message').textContent = `Score attached to ${!rename.hidden && useName.checked ? vintageFirst(titleCase(ctName), w.vintage) : w.name}.`;
       $('#save').textContent = 'Attached ✓';
     } catch(error) {$('#message').className = 'error'; $('#message').textContent = error.message; $('#save').disabled = false;}
   };

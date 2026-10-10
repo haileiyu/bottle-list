@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId, titleCase, searchName, rankForScore, pack, unpack, diff, itemBytes, mergeState, SYNC_ITEM_BYTES} from '../core.mjs';
+import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId, titleCase, vintageFirst, producerFirst, searchName, rankForScore, pack, unpack, diff, itemBytes, mergeState, SYNC_ITEM_BYTES} from '../core.mjs';
 const wine = (extra={})=>({name:'2016 Example Barolo',url:'https://www.example.com/wine',price:95,quantity:2,currency:'USD',vintage:'2016',size:'750 ml',...extra});
 function setup(){let state=applyOperation(emptyState(),{type:'saveWine',wine:wine()});return applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{name:'Example Wines',threshold:300,currency:'USD'}});}
 test('Each merchant totals independently and crosses $300 exactly once',()=>{
@@ -53,7 +53,7 @@ test('Case discount settings are validated and legacy merchants still total',()=
 });
 test('All-caps and all-lowercase names become Title Case; mixed-case names are kept',()=>{
  for(const [raw,want] of [['CHABLIS VAUPRIN ROLAND LAVANTUREUX 2023 (750ML)','Chablis Vauprin Roland Lavantureux 2023 (750ml)'],["château d'yquem sauternes 2015","Château d'Yquem Sauternes 2015"],['DOMAINE DE LA ROMANÉE-CONTI','Domaine de la Romanée-Conti'],['CHÂTEAU LA MISSION HAUT-BRION','Château La Mission Haut-Brion'],['CHÂTEAUNEUF-DU-PAPE','Châteauneuf-du-Pape'],['QUINTA DO VALE VINTAGE PORT NV','Quinta do Vale Vintage Port NV'],['louis xiii cognac','Louis XIII Cognac'],["L'ÉVANGILE POMEROL","L'Évangile Pomerol"],['6 X 750ML','6 x 750ml'],['1.5L','1.5L'],["d'Arenberg The Dead Arm","d'Arenberg The Dead Arm"],['McLaren Vale Shiraz','McLaren Vale Shiraz'],['2016','2016']])assert.equal(titleCase(raw),want);
- const saved=normalizeWine(wine({name:'BAROLO RISERVA DOCG',size:'750ML'}));assert.equal(saved.name,'Barolo Riserva DOCG');assert.equal(saved.size,'750ml');
+ const saved=normalizeWine(wine({name:'BAROLO RISERVA DOCG',size:'750ML'}));assert.equal(saved.name,'2016 Barolo Riserva DOCG');assert.equal(saved.size,'750ml');
  const old={...normalizeWine(wine()),size:'750ML'};assert.throws(()=>applyOperation({...emptyState(),wines:[old]},{type:'saveWine',wine:wine({size:'750ml'})}));
 });
 test('Sync items round-trip, stay under the per-item limit and diff only what changed',()=>{
@@ -90,4 +90,24 @@ test('CT page matches rank the same vintage and closest name first, ignoring acc
 });
 test('Search names drop vintage, size, colour and classification words',()=>{
  for(const [raw,want] of [['Dureuil Janthial 2023 Rully Rouge Clos du Chapitre','Dureuil Janthial Rully Clos du Chapitre'],['Domaine Leflaive Puligny-Montrachet Premier Cru Les Pucelles 2019 (750ml)','Leflaive Puligny-Montrachet Les Pucelles'],['Château Pontet-Canet 2009 6 x 750ml','Pontet-Canet'],['Ridge Monte Bello Red Wine 1.5L','Ridge Monte Bello'],['Krug Grande Cuvée NV','Krug Grande Cuvée'],['2016','2016'],['','']])assert.equal(searchName(raw),want);
+});
+test('Names put the vintage first, once, without touching other years',()=>{
+ for(const [name,vintage,want] of [['Dureuil Janthial 2023 Rully Rouge Clos du Chapitre','2023','2023 Dureuil Janthial Rully Rouge Clos du Chapitre'],['2023 Dureuil Janthial Rully','2023','2023 Dureuil Janthial Rully'],['2022 Example Barolo','2023','2023 Example Barolo'],['Example Cuvée 1855, 2019','2019','2019 Example Cuvée 1855'],['Example Cuvée 1855','2019','2019 Example Cuvée 1855'],['Krug Grande Cuvée NV','nv','NV Krug Grande Cuvée'],['Example (2019) 750ml','2019','2019 Example 750ml'],['2019 Ridge Monte Bello','',"2019 Ridge Monte Bello"],['Ridge Monte Bello','',"Ridge Monte Bello"],['2019','2019','2019']])assert.equal(vintageFirst(name,vintage),want);
+ const once=vintageFirst('Dureuil Janthial 2023 Rully','2023');assert.equal(vintageFirst(once,'2023'),once);
+});
+test('The shop brand moves to the front in its own spelling only when the name contains it',()=>{
+ assert.equal(producerFirst('Dureuil Janthial 2023 Rully Rouge Clos du Chapitre','Dureuil-Janthial','2023','www.example.com'),'2023 Dureuil-Janthial Rully Rouge Clos du Chapitre');
+ assert.equal(producerFirst('Chablis Vauprin Roland Lavantureux 2023','Roland Lavantureux','2023'),'2023 Roland Lavantureux Chablis Vauprin');
+ assert.equal(producerFirst('Rully Rouge Clos du Chapitre, Dureuil-Janthial 2023','DUREUIL-JANTHIAL','2023'),'2023 DUREUIL-JANTHIAL Rully Rouge Clos du Chapitre');
+ assert.equal(producerFirst('Example Barolo 2016','Some Importer','2016'),'2016 Example Barolo');
+ assert.equal(producerFirst('Example Barolo 2016','Example','2016','example.com'),'2016 Example Barolo');
+ assert.equal(producerFirst('Cellar Door Pinot 2016','The Cellar Door','2016','thecellardoor.com'),'2016 Cellar Door Pinot');
+ assert.equal(producerFirst('2019 Ridge Monte Bello','Ridge',''),'2019 Ridge Monte Bello');
+ assert.equal(producerFirst('Monte Bello Ridge','Ridge',''),'Ridge Monte Bello');
+});
+test('Taking the CellarTracker name keeps the saved vintage, price and quantity',()=>{
+ let state=setup();const id=state.wines[0].id;
+ state=applyOperation(state,{type:'setScore',id,ctScore:90,name:'2015 Example Estate Barolo Cannubi'});
+ const w=state.wines[0];assert.equal(w.name,'2016 Example Estate Barolo Cannubi');assert.equal(w.priceCents,9500);assert.equal(w.quantity,2);
+ assert.throws(()=>applyOperation(state,{type:'setScore',id,ctScore:90,name:' '}),/name/);
 });

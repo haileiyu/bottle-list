@@ -1,10 +1,10 @@
-import {titleCase, searchName} from './core.mjs';
+import {titleCase, vintageFirst, searchName} from './core.mjs';
 import {loadState} from './storage.mjs';
 export const $ = selector => document.querySelector(selector);
 export async function state() {
   const current = await loadState();
-  // Wines saved before names were tidied show in Title Case too; they are stored that way on their next save.
-  for (const wine of current.wines) {wine.name = titleCase(wine.name); wine.size = titleCase(wine.size);}
+  // Wines saved before names were tidied show in Title Case with the vintage first too; they are stored that way on their next save.
+  for (const wine of current.wines) {wine.name = vintageFirst(titleCase(wine.name), wine.vintage); wine.size = titleCase(wine.size);}
   return current;
 }
 export async function mutate(action) {
