@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId, titleCase, rankForScore, pack, unpack, diff, itemBytes, mergeState, SYNC_ITEM_BYTES} from '../core.mjs';
+import {emptyState, applyOperation, totals, notificationTransitions, normalizeWine, merchantId, titleCase, searchName, rankForScore, pack, unpack, diff, itemBytes, mergeState, SYNC_ITEM_BYTES} from '../core.mjs';
 const wine = (extra={})=>({name:'2016 Example Barolo',url:'https://www.example.com/wine',price:95,quantity:2,currency:'USD',vintage:'2016',size:'750 ml',...extra});
 function setup(){let state=applyOperation(emptyState(),{type:'saveWine',wine:wine()});return applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{name:'Example Wines',threshold:300,currency:'USD'}});}
 test('Each merchant totals independently and crosses $300 exactly once',()=>{
@@ -87,4 +87,7 @@ test('CT page matches rank the same vintage and closest name first, ignoring acc
  state=applyOperation(state,{type:'status',id:state.wines[2].id,status:'purchased'});
  const ranked=rankForScore(state.wines,{name:'2009 Château Pontet-Canet',vintage:'2009'});
  assert.deepEqual(ranked.map(w=>w.url),['https://a.com/2','https://a.com/1']);
+});
+test('Search names drop vintage, size, colour and classification words',()=>{
+ for(const [raw,want] of [['Dureuil Janthial 2023 Rully Rouge Clos du Chapitre','Dureuil Janthial Rully Clos du Chapitre'],['Domaine Leflaive Puligny-Montrachet Premier Cru Les Pucelles 2019 (750ml)','Leflaive Puligny-Montrachet Les Pucelles'],['Château Pontet-Canet 2009 6 x 750ml','Pontet-Canet'],['Ridge Monte Bello Red Wine 1.5L','Ridge Monte Bello'],['Krug Grande Cuvée NV','Krug Grande Cuvée'],['2016','2016'],['','']])assert.equal(searchName(raw),want);
 });

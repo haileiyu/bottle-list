@@ -1,4 +1,4 @@
-import {titleCase} from './core.mjs';
+import {titleCase, searchName} from './core.mjs';
 import {loadState} from './storage.mjs';
 export const $ = selector => document.querySelector(selector);
 export async function state() {
@@ -21,9 +21,9 @@ export function element(tag, text, className) {
 export function link(text, url, className) {
   const a = element('a', text, className); a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer'; return a;
 }
-export function ctSearch(name) {return 'https://www.cellartracker.com/list.asp?Table=List&iUserOverride=0&szSearch=' + encodeURIComponent(name);}
+export function ctSearch(name) {return 'https://www.cellartracker.com/list.asp?Table=List&iUserOverride=0&szSearch=' + encodeURIComponent(searchName(name));}
 export function wsSearch(name, vintage = '') {
-  const words = String(name).trim().split(/\s+/).filter(Boolean).map(encodeURIComponent).join('+');
+  const words = searchName(name).split(/\s+/).filter(Boolean).map(encodeURIComponent).join('+');
   if (!words) return 'https://www.wine-searcher.com/';
   return 'https://www.wine-searcher.com/find/' + words + (/^\d{4}$/.test(String(vintage).trim()) ? '/' + String(vintage).trim() : '');
 }

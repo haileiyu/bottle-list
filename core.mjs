@@ -35,6 +35,14 @@ export function titleCase(value) {
     return before + out + after;
   }).join(' ');
 }
+// Words in a shop's name that CellarTracker's own wine names leave out (vintage, size, colour,
+// classification, "Domaine"). Searching with them can come back empty, so search links drop them.
+const SEARCH_DROP = new Set(['rouge', 'blanc', 'rosso', 'bianco', 'tinto', 'blanco', 'nv', 'aoc', 'aop', 'doc', 'docg', 'igt', 'igp', 'ava', 'domaine', 'chateau', 'maison', 'weingut', 'bottle', 'magnum']);
+export function searchName(value) {
+  const text = String(value ?? '').replace(/\b(?:1er|premier|grand) cru\b|\b(?:red|white) wine\b|\b\d+\s?x\b|\b\d+(?:[.,]\d+)?\s?(?:ml|cl|l)\b/gi, ' ');
+  const words = text.split(/[\s,()\/]+/).filter(w => /[\p{L}\p{N}]/u.test(w) && !/^(?:19|20)\d{2}$/.test(w) && !SEARCH_DROP.has(w.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()));
+  return words.join(' ') || String(value ?? '').trim();
+}
 export function cents(value, nullable = false) {
   if (nullable && (value === '' || value == null)) return null;
   if (value === '' || value == null || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > 10000000) throw new Error('Enter a valid non-negative amount');

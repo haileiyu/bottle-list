@@ -42,7 +42,7 @@ function render() {
       if (w.notes) name.append(el('small',w.notes,'muted'));
       const qty = el('td'); const input = el('input'); input.type='number'; input.className='quantity'; input.value=w.quantity; input.min=1; input.max=999; input.setAttribute('aria-label',`${w.name} quantity`);
       input.onchange = async()=>{if(!input.reportValidity())return; input.disabled=true; try {await act({type:'saveWine',wine:{...w,price:w.priceCents == null?'':w.priceCents/100,quantity:input.value}});}catch(e){message(e.message);input.value=w.quantity;input.disabled=false;}}; qty.append(input);
-      const score = el('td'); score.append(link(w.ctScore == null ? 'Find score ↗' : w.ctScore.toFixed(1),w.ctUrl || ctSearch(w.name + ' ' + w.vintage),w.ctScore == null ? 'tiny' : 'score'));
+      const score = el('td'); score.append(link(w.ctScore == null ? 'Find score ↗' : w.ctScore.toFixed(1),w.ctUrl || ctSearch(w.name),w.ctScore == null ? 'tiny' : 'score'));
       if(w.ctScore!=null) score.append(el('small',[w.ctNotes==null?'':`${w.ctNotes} note${w.ctNotes===1?'':'s'}`,w.ctUrl?'Source ↗':'No source'].filter(Boolean).join(' · '),'muted tiny'));
       const price = el('td'), findPrice = el('small'); findPrice.append(link('Find price ↗',wsSearch(w.name,w.vintage),'tiny')); price.append(money(w.priceCents,w.currency),findPrice);
       const [statusText,statusDot] = w.status==='purchased'?['Purchased','done']:w.availability==='out'?['Out of stock','bad']:!w.eligible?['Not counted','']:w.priceCents==null?['Price needed','warn']:w.currency!==m.currency?['Currency mismatch','warn']:w.availability==='unknown'?['Stock unverified','warn']:['To buy','ok'];
