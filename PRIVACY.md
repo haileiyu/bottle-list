@@ -16,7 +16,7 @@ Bottle List stores the following in Chrome's synced extension storage (`chrome.s
 
 - the wines you save: product link, name, vintage, size, price, currency, stock status and quantity
 - CellarTracker scores, note counts and links, whether typed in or read from a CellarTracker page you clicked it on
-- anything else you type in: notes, and each shop's name, free-shipping threshold, case discount and notes
+- anything else you type in: notes, and each shop's name, free-shipping threshold, case discount, whether it charges you sales tax, and notes
 - whether you have marked a wine as bought
 
 If Chrome sync is turned on with "Extensions" included, Chrome copies this data to your Google account and to other computers where you are signed in to Chrome with the same account, under Google's privacy policy. If sync is off, the data stays in Chrome on this computer.

@@ -23,7 +23,7 @@ function render() {
     const card = el('section', null, 'merchant'); card.id = id;
     const head = el('div', null, 'merchant-head');
     const title = el('h2'), site = link(m.name,'https://' + id); site.title = id; title.append(site);
-    const controls = el('div', null,'actions'); controls.append(el('span',t.ready ? '✓ Threshold reached' : !t.configured ? 'Threshold not set' : `${money(t.remaining,m.currency)} to go`,t.ready ? 'pill green' : 'pill'),button('Shipping settings',()=>editMerchant(id)));
+    const controls = el('div', null,'actions'); if(m.salesTax==='yes'||m.salesTax==='no')controls.append(el('span',m.salesTax==='yes'?'Charges sales tax':'No sales tax','pill'));controls.append(el('span',t.ready ? '✓ Threshold reached' : !t.configured ? 'Threshold not set' : `${money(t.remaining,m.currency)} to go`,t.ready ? 'pill green' : 'pill'),button('Shipping settings',()=>editMerchant(id)));
     head.append(title,controls); card.append(head);
     const summary = el('div',null,'merchant-summary');
     const sumText = el('div'); sumText.append(el('strong',money(t.total,m.currency)),document.createTextNode(` / ${t.configured ? money(m.thresholdCents,m.currency) : 'not set'} · ${t.bottles} item(s) counted`));
@@ -62,7 +62,9 @@ function editMerchant(id) {
   for(const [name,title,value,type,attrs] of [['name','Merchant name',m.name,'text'],['threshold','Free-shipping threshold (pre-tax, after case discount; leave blank for no alert)',m.thresholdCents==null?'':m.thresholdCents/100,'number',{min:0,step:'0.01',max:'10000000',placeholder:'e.g. 300'}],['caseSize','Case discount: minimum items (leave blank if none)',m.caseSize??'','number',{min:2,step:1,max:999,placeholder:'e.g. 12'}],['caseDiscount','Case discount: percent off',m.caseDiscount??'','number',{min:0.01,step:'0.01',max:100,placeholder:'e.g. 10'}],['notes','Regions / membership / exclusions',m.notes,'text']]) {
     const label=el('label',title),input=el('input');input.name=name;input.value=value;input.type=type;Object.assign(input,attrs);label.append(input);form.append(label);
   }
-  const label=el('label','Threshold currency'),select=el('select');select.name='currency';for(const currency of ['USD','EUR','GBP','CAD','HKD','JPY','AUD']){const option=el('option',currency);option.value=currency;select.append(option);}select.value=m.currency;label.append(select);form.append(label,el('p','Confirm the threshold from the merchant\'s shipping policy. Reaching it only means you hit the amount you set; check at checkout whether it still qualifies after discounts and whether they ship to New York. The case discount takes the percent off the whole counted order once it has at least that many items, counting Qty as entered (a 6-bottle case with Qty 1 counts as one item).','muted tiny'));
+  const label=el('label','Threshold currency'),select=el('select');select.name='currency';for(const currency of ['USD','EUR','GBP','CAD','HKD','JPY','AUD']){const option=el('option',currency);option.value=currency;select.append(option);}select.value=m.currency;label.append(select);
+  const taxLabel=el('label','Charges sales tax on orders shipped to you'),tax=el('select');tax.name='salesTax';for(const [value,text] of [['unknown','Not checked yet'],['yes','Yes'],['no','No']]){const option=el('option',text);option.value=value;tax.append(option);}tax.value=m.salesTax||'unknown';taxLabel.append(tax);
+  form.append(label,taxLabel,el('p','Confirm the threshold from the merchant\'s shipping policy. Reaching it only means you hit the amount you set; check at checkout whether it still qualifies after discounts and whether they ship to New York. The case discount takes the percent off the whole counted order once it has at least that many items, counting Qty as entered (a 6-bottle case with Qty 1 counts as one item).','muted tiny'));
   submitDialog(form,()=>act({type:'saveMerchant',id,merchant:Object.fromEntries(new FormData(form))}));
 }
 $('#close').onclick=()=>$('#dialog').close();
@@ -71,7 +73,7 @@ $('#search').oninput=render;$('#sort').onchange=render;
 for(const button of document.querySelectorAll('[data-filter]'))button.onclick=()=>{filter=button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===button));render();};
 $('#backup').onclick=()=>download('bottle-list-backup.json',JSON.stringify(data,null,2),'application/json');
 $('#export').onclick=()=>{
-  const rows=[['Merchant','URL','Wine','Vintage','Size','Unit price','Currency','Quantity','CT community score','CT notes','CT link','Stock','Counts toward threshold','Status','Updated','Notes'],...data.wines.map(w=>[data.merchants[w.merchant].name,w.url,w.name,w.vintage,w.size,w.priceCents==null?'':w.priceCents/100,w.currency,w.quantity,w.ctScore??'',w.ctNotes??'',w.ctUrl,w.availability,w.eligible,w.status,w.updatedAt,w.notes])];
+  const rows=[['Merchant','Merchant charges sales tax','URL','Wine','Vintage','Size','Unit price','Currency','Quantity','CT community score','CT notes','CT link','Stock','Counts toward threshold','Status','Updated','Notes'],...data.wines.map(w=>[data.merchants[w.merchant].name,{yes:'Yes',no:'No'}[data.merchants[w.merchant].salesTax]||'',w.url,w.name,w.vintage,w.size,w.priceCents==null?'':w.priceCents/100,w.currency,w.quantity,w.ctScore??'',w.ctNotes??'',w.ctUrl,w.availability,w.eligible,w.status,w.updatedAt,w.notes])];
   const quote=value=>'"'+String(value).replace(/^[=+@\-\t\r]/,s=>"'"+s).replace(/"/g,'""')+'"';
   download('bottle-list.csv','\ufeff'+rows.map(row=>row.map(quote).join(',')).join('\r\n'),'text/csv;charset=utf-8');
 };

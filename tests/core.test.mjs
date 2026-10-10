@@ -111,3 +111,11 @@ test('Taking the CellarTracker name keeps the saved vintage, price and quantity'
  const w=state.wines[0];assert.equal(w.name,'2016 Example Estate Barolo Cannubi');assert.equal(w.priceCents,9500);assert.equal(w.quantity,2);
  assert.throws(()=>applyOperation(state,{type:'setScore',id,ctScore:90,name:' '}),/name/);
 });
+test('Each shop records whether it charges sales tax, without changing totals',()=>{
+ let state=setup();assert.equal(state.merchants['example.com'].salesTax,'unknown');
+ state=applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{currency:'USD',threshold:300,salesTax:'yes'}});
+ assert.equal(state.merchants['example.com'].salesTax,'yes');assert.equal(totals(state,'example.com').total,19000);
+ assert.equal(applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{currency:'USD',threshold:300}}).merchants['example.com'].salesTax,'yes');
+ assert.throws(()=>applyOperation(state,{type:'saveMerchant',id:'example.com',merchant:{currency:'USD',salesTax:'maybe'}}));
+ assert.equal(unpack({['w:'+state.wines[0].id]:state.wines[0]}).merchants['example.com'].salesTax,'unknown');
+});

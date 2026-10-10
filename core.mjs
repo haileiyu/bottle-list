@@ -139,7 +139,7 @@ export function applyOperation(state, action) {
     if (duplicate && !action.wine.id) throw new Error('A wine with this link, vintage and size is already saved. Change its quantity or price in the list.');
     const index = next.wines.findIndex(w => w.id === wine.id);
     if (index < 0) next.wines.push(wine); else next.wines[index] = wine;
-    next.merchants[wine.merchant] ||= {name: wine.merchant, currency: wine.currency, thresholdCents: null, caseSize: null, caseDiscount: null, notes: '', notified: false};
+    next.merchants[wine.merchant] ||= {name: wine.merchant, currency: wine.currency, thresholdCents: null, caseSize: null, caseDiscount: null, salesTax: 'unknown', notes: '', notified: false};
   } else if (action.type === 'saveMerchant') {
     if (!next.merchants[action.id]) throw new Error('Merchant not found');
     const m = action.merchant;
@@ -150,7 +150,10 @@ export function applyOperation(state, action) {
     if (caseSize != null && (!Number.isInteger(caseSize) || caseSize < 2 || caseSize > 999)) throw new Error('Case size must be a whole number from 2 to 999');
     if (caseDiscount != null && (!Number.isFinite(caseDiscount) || caseDiscount <= 0 || caseDiscount > 100)) throw new Error('Case discount must be more than 0% and at most 100%');
     if ((caseSize == null) !== (caseDiscount == null)) throw new Error('Enter both the case size and the case discount, or leave both blank');
-    Object.assign(next.merchants[action.id], {name: String(m.name || action.id).slice(0, 200), currency: m.currency, thresholdCents: cents(m.threshold, true), caseSize, caseDiscount, notes: String(m.notes || '').slice(0, 1000)});
+    // Whether the shop charges sales tax on orders shipped to you: 'yes', 'no', or 'unknown' until checked.
+    const salesTax = m.salesTax ?? next.merchants[action.id].salesTax ?? 'unknown';
+    if (!['unknown', 'yes', 'no'].includes(salesTax)) throw new Error('Choose whether this shop charges sales tax');
+    Object.assign(next.merchants[action.id], {name: String(m.name || action.id).slice(0, 200), currency: m.currency, thresholdCents: cents(m.threshold, true), caseSize, caseDiscount, salesTax, notes: String(m.notes || '').slice(0, 1000)});
   } else if (action.type === 'status') {
     const wine = next.wines.find(w => w.id === action.id);
     if (!wine) throw new Error('Wine not found');
@@ -207,7 +210,7 @@ export function unpack(items = {}) {
     else if (key.startsWith('w:')) state.wines.push(value);
   }
   // A wine can sync to this computer before its merchant does.
-  for (const w of state.wines) state.merchants[w.merchant] ||= {name: w.merchant, currency: w.currency, thresholdCents: null, caseSize: null, caseDiscount: null, notes: '', notified: false};
+  for (const w of state.wines) state.merchants[w.merchant] ||= {name: w.merchant, currency: w.currency, thresholdCents: null, caseSize: null, caseDiscount: null, salesTax: 'unknown', notes: '', notified: false};
   state.wines.sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
   return state;
 }

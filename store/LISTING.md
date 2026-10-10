@@ -91,7 +91,7 @@ Used with activeTab to run one script included in the package in the current tab
 storage:
 
 ```
-Stores the user's saved wines and their per-shop settings (free-shipping threshold, case discount, notes) in chrome.storage.sync, so Chrome sync can carry them to the user's other computers. Nothing is sent to any other server.
+Stores the user's saved wines and their per-shop settings (free-shipping threshold, case discount, whether the shop charges sales tax, notes) in chrome.storage.sync, so Chrome sync can carry them to the user's other computers. Nothing is sent to any other server.
 ```
 
 notifications:
