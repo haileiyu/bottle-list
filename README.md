@@ -69,6 +69,6 @@ Plain JavaScript / CSS, Manifest V3, no dependencies to install, no build step. 
 - `dashboard.*`: list, editing, filtering, export.
 - `store/`: Chrome Web Store listing text (`LISTING.md`), images, and `build-zip.sh`, which builds the upload zip in `dist/`. The privacy policy is `PRIVACY.md`.
 
-Run `node --test tests/*.test.mjs`: 23 tests pass, covering amount totals, case discounts, Title Case names, currency separation, threshold notification state, duplicate entries, sync storage, moving older lists into sync, page metadata extraction, reading CellarTracker scores, and matching them to saved wines. JavaScript syntax checks pass.
+Run `node --test tests/*.test.mjs`: 24 tests pass, covering amount totals, case discounts, Title Case names, currency separation, threshold notification state, duplicate entries, sync storage, moving older lists into sync, page metadata extraction, reading CellarTracker scores, and matching them to saved wines. JavaScript syntax checks pass.
 
 Installation, UI and operating-system notification testing in a real Chrome has not been done yet, and individual merchant sites have not been verified one by one; the current environment cannot download a test browser. After installing, save one or two products first, check the prices manually, then set that merchant's threshold to the current total to test the notification. Restore the real threshold when you are done.

@@ -7,14 +7,15 @@
   const clean = text => String(text || '').replace(/\s+/g, ' ').trim();
   const description = clean(document.querySelector('meta[name="description"],meta[property="og:description"]')?.content);
   const body = clean(document.body?.innerText);
-  // "Average of 89.9 points in 55 community wine reviews" or "Community Tasting Notes (average 92.3 pts. and 14 notes)".
+  // "Community Tasting Notes (average 92.3 pts. and 14 notes)" first, since it counts notes;
+  // otherwise "Average of 89.9 points in 55 community wine reviews", which counts all reviews.
   const patterns = [
-    /\baverage of (\d{2,3}(?:\.\d+)?) points? in ([\d,]+) community (?:wine )?(?:reviews|notes)\b/i,
-    /\bcommunity tasting notes \(average (\d{2,3}(?:\.\d+)?) pts?\.? and ([\d,]+) notes?\)/i
+    /\bcommunity tasting notes \(average (\d{2,3}(?:\.\d+)?) pts?\.? and ([\d,]+) notes?\)/i,
+    /\baverage of (\d{2,3}(?:\.\d+)?) points? in ([\d,]+) community (?:wine )?(?:reviews|notes)\b/i
   ];
   let score = '', notes = '';
-  for (const text of [description, body]) {
-    for (const pattern of patterns) {
+  for (const pattern of patterns) {
+    for (const text of [description, body]) {
       const match = text.match(pattern);
       if (match && Number(match[1]) >= 50 && Number(match[1]) <= 100) {score = match[1]; notes = match[2].replace(/,/g, ''); break;}
     }

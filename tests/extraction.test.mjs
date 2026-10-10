@@ -41,3 +41,7 @@ test('CellarTracker page: ignores critic and personal scores, and pages without 
  const none=extractCt({body:'WA 98 points. My score 99 pts.'});assert.equal(none.score,'');assert.equal(none.notes,'');assert.equal(none.iWine,'874157');
  assert.deepEqual({...extractCt({url:'https://www.cellartracker.com/list.asp?szSearch=pontet'})},{});
 });
+test('CellarTracker page: the tasting-notes count wins over the review count',()=>{
+ const a=extractCt({description:'Average of 89.9 points in 909 community wine reviews',body:'Community Tasting Notes (average 90.1 pts. and 429 notes)'});
+ assert.equal(a.score,'90.1');assert.equal(a.notes,'429');
+});
