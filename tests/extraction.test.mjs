@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 const code=readFileSync(new URL('../extract.js',import.meta.url),'utf8');
-function extract(json, {url='https://example.com/wine',meta={},body='',title='Wine',h1=''}={}) {
-  const document={title,body:{innerText:body},querySelectorAll:()=>[{textContent:JSON.stringify(json)}],querySelector:s=>s==='h1'?(h1?{textContent:h1}:null):meta[s.match(/\[property="([^"]+)"\]/)?.[1]]?{content:meta[s.match(/\[property="([^"]+)"\]/)[1]]}:null};
+function extract(json, {url='https://example.com/wine',meta={},body='',title='Wine',h1='',scripts=[],formIds=[],micro=null}={}) {
+  const microEl={querySelector:q=>{const v=micro[q.match(/itemprop="([^"]+)"/)[1]];return v==null?null:{getAttribute:a=>a==='content'?v:null,textContent:''};}};
+  const all=s=>s.includes('ld+json')?[{textContent:typeof json==='string'?json:JSON.stringify(json)}]:s.includes('cart/add')?formIds.map(f=>typeof f==='string'?{value:f}:f):s.includes('itemprop')?(micro?[microEl]:[]):s.startsWith('script')?scripts.map(textContent=>({textContent})):[];
+  const document={title,body:{innerText:body},querySelectorAll:all,querySelector:s=>s==='h1'?(h1?{textContent:h1}:null):meta[s.match(/\[property="([^"]+)"\]/)?.[1]]?{content:meta[s.match(/\[property="([^"]+)"\]/)[1]]}:null};
   return vm.runInNewContext(code,{document,location:{href:url},URL});
 }
 test('Reads product metadata with decimal USD price and vintage',()=>{
@@ -27,6 +29,26 @@ test('Product meta fallback keeps shipping hints separate from item price',()=>{
 test('og:price meta fallback reads Shopify-style pages without usable product JSON',()=>{
  const result=extract({}, {meta:{'og:title':'Clos Puy Arnaud 2019 Castillon Cotes de Bordeaux','og:price:amount':'38.99','og:price:currency':'USD'}});assert.equal(result.price,'38.99');assert.equal(result.currency,'USD');assert.match(result.warning,/metadata/);
  assert.equal(extract({'@type':'Product',name:'Wine',offers:[{price:10},{price:100}]},{meta:{'og:price:amount':'10'}}).price,'');
+});
+test('JSON-LD built from page variables is repaired, so price and stock still read',()=>{
+ const ld=`var itemName = "Clos Puy Arnaud 2019";\n var cleanedItemName = itemName.replace(/['"]/g, '');\n {"@context":"http://schema.org/","@type":"Product","name": cleanedItemName,"url":"https://example.com/wine",
+  "offers":{"@type":"Offer","priceCurrency":"USD","price":"38.99","availability":"http://schema.org/OutOfStock","name" : cleanedItemName,"priceValidUntil":"2027-10-16"}}`;
+ const result=extract(ld,{meta:{'og:title':'Clos Puy Arnaud 2019'}});
+ assert.equal(result.price,'38.99');assert.equal(result.availability,'out');assert.equal(result.name,'Clos Puy Arnaud 2019');
+});
+test('Microdata offer gives stock and price when there is no JSON-LD',()=>{
+ assert.equal(extract({}, {meta:{'og:price:amount':'449.95'},micro:{availability:'http://schema.org/InStock'}}).availability,'in');
+ const result=extract({}, {micro:{price:'79.99',priceCurrency:'USD',availability:'InStock'}});assert.equal(result.price,'79.99');assert.equal(result.currency,'USD');assert.equal(result.availability,'in');
+});
+test('Shopify page with several sizes reads the size picked in the cart form',()=>{
+ const scripts=['var meta = {"product":{"id":7,"variants":[{"id":1,"price":2500,"public_title":"750ml"},{"id":2,"price":5200,"public_title":"1.5L"}]},"page":{"pageType":"product"}};\nfor (var attr in meta) {}'];
+ const ld={'@type':'Product',name:'Wine',offers:{price:'25.00',availability:'InStock'}};
+ const picked=extract(ld,{scripts,formIds:['999','2'],meta:{'og:price:amount':'25.00'}});
+ assert.equal(picked.price,'52.00');assert.equal(picked.size,'1.5L');assert.equal(picked.availability,'unknown');
+ assert.equal(extract(ld,{scripts,url:'https://example.com/wine?variant=1'}).price,'25.00');
+ assert.equal(extract(ld,{scripts,formIds:[{type:'radio',value:'1',checked:false},{type:'radio',value:'2',checked:true}]}).price,'52.00');
+ const none=extract({}, {scripts,meta:{'og:price:amount':'25.00'}});assert.equal(none.price,'');assert.match(none.warning,/several sizes/);
+ assert.equal(extract({}, {scripts:[scripts[0].replace(/,\{"id":2[^}]*\}/,'')],formIds:['1'],meta:{'og:price:amount':'25.00'}}).price,'25.00');
 });
 const ctCode=readFileSync(new URL('../extract-ct.js',import.meta.url),'utf8');
 function extractCt({url='https://www.cellartracker.com/wine.asp?iWine=874157',title='2009 Château Pontet-Canet, France, Bordeaux, Pauillac - CellarTracker',description='',body=''}={}) {

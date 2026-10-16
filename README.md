@@ -28,7 +28,7 @@ Case discount example: 12 × $25 = $300 with a 10% discount at 12+ items comes t
 
 ## Current support and limitations
 
-- Automatic extraction relies on the product page's Product JSON-LD or product price meta tags. If the page has no reliable markup, lists several sizes that cannot be matched to the selected one, or only shows a lowest price, you will be asked to enter the price manually.
+- Automatic extraction relies on the product page's Product JSON-LD, schema.org microdata, product price meta tags, or Shopify's list of sizes and prices. If the page has no reliable markup, lists several sizes that cannot be matched to the selected one, or only shows a lowest price, you will be asked to enter the price manually.
 - Check discounts, vintage, size, currency and stock before saving. Page metadata may not exactly match the currently selected variant.
 - Merchants are grouped by domain. `www` and non-`www` are merged; other subdomains and different domains are not merged automatically.
 - Amounts are calculated in integer cents. Wines that are out of stock, have no price, use a currency different from the merchant setting, or have "Count this wine toward free shipping" unchecked are not counted. Wines with unknown stock but a valid price are counted and flagged as unverified.
@@ -70,6 +70,6 @@ Plain JavaScript / CSS, Manifest V3, no dependencies to install, no build step. 
 - `dashboard.*`: list, editing, filtering, export.
 - `store/`: Chrome Web Store listing text (`LISTING.md`), images, and `build-zip.sh`, which builds the upload zip in `dist/`. The privacy policy is `PRIVACY.md`.
 
-Run `node --test tests/*.test.mjs`: 31 tests pass, covering amount totals, case discounts, per-shop sales tax, Title Case names, currency separation, threshold notification state, duplicate entries, sync storage, moving older lists into sync, page metadata extraction, search link names, vintage-producer-wine names, reading CellarTracker scores, and matching them to saved wines. JavaScript syntax checks pass.
+Run `node --test tests/*.test.mjs`: 34 tests pass, covering amount totals, case discounts, per-shop sales tax, Title Case names, currency separation, threshold notification state, duplicate entries, sync storage, moving older lists into sync, page metadata extraction, search link names, vintage-producer-wine names, reading CellarTracker scores, and matching them to saved wines. JavaScript syntax checks pass.
 
 Installation, UI and operating-system notification testing in a real Chrome has not been done yet, and individual merchant sites have not been verified one by one; the current environment cannot download a test browser. After installing, save one or two products first, check the prices manually, then set that merchant's threshold to the current total to test the notification. Restore the real threshold when you are done.

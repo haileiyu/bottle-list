@@ -85,7 +85,7 @@ When the user clicks the extension icon on a wine's product page, activeTab give
 scripting:
 
 ```
-Used with activeTab to run one script included in the package in the current tab after the user clicks the icon. On a shop page, extract.js reads the page's product data (JSON-LD and product meta tags) and returns it to the popup. It also scans the page's visible text for free-shipping wording, which is not shown, saved or sent anywhere. On a CellarTracker wine page, extract-ct.js reads the wine name, the community average score and the number of notes instead. Neither script changes the page.
+Used with activeTab to run one script included in the package in the current tab after the user clicks the icon. On a shop page, extract.js reads the page's product data (JSON-LD, microdata, product meta tags, and on Shopify shops the product's list of sizes and the size picked) and returns it to the popup. It also scans the page's visible text for free-shipping wording, which is not shown, saved or sent anywhere. On a CellarTracker wine page, extract-ct.js reads the wine name, the community average score and the number of notes instead. Neither script changes the page.
 ```
 
 storage:
