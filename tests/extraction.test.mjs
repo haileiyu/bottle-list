@@ -24,6 +24,10 @@ test('Aggregate low price and list pages leave price blank',()=>{
 test('Product meta fallback keeps shipping hints separate from item price',()=>{
  const result=extract({}, {meta:{'og:title':'Wine 2015','product:price:amount':'129.99','product:price:currency':'USD'},body:'Free shipping on orders over $300. Sale $100.'});assert.equal(result.price,'129.99');assert.equal(result.currency,'USD');assert.equal(result.shippingHints.length,1);
 });
+test('og:price meta fallback reads Shopify-style pages without usable product JSON',()=>{
+ const result=extract({}, {meta:{'og:title':'Clos Puy Arnaud 2019 Castillon Cotes de Bordeaux','og:price:amount':'38.99','og:price:currency':'USD'}});assert.equal(result.price,'38.99');assert.equal(result.currency,'USD');assert.match(result.warning,/metadata/);
+ assert.equal(extract({'@type':'Product',name:'Wine',offers:[{price:10},{price:100}]},{meta:{'og:price:amount':'10'}}).price,'');
+});
 const ctCode=readFileSync(new URL('../extract-ct.js',import.meta.url),'utf8');
 function extractCt({url='https://www.cellartracker.com/wine.asp?iWine=874157',title='2009 Château Pontet-Canet, France, Bordeaux, Pauillac - CellarTracker',description='',body=''}={}) {
   const document={title,body:{innerText:body},querySelector:s=>s.startsWith('meta')?(description?{content:description}:null):null};

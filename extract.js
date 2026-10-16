@@ -22,11 +22,12 @@
   const offer = selectedOffer || (offers.length === 1 ? offers[0] : {});
   const ambiguous = offers.length > 1 && !selectedOffer;
   const name = String(product?.name || meta('og:title') || document.querySelector('h1')?.textContent?.trim() || document.title).replace(/\s+/g, ' ').slice(0, 500);
-  let rawPrice = ambiguous ? '' : (offer.price ?? (meta('product:price:amount') || ''));
+  // Shopify and many shop platforms tag the price as og:price:* instead of product:price:*.
+  let rawPrice = ambiguous ? '' : (offer.price ?? (meta('product:price:amount') || meta('og:price:amount') || ''));
   // Do not use aggregate lowPrice or a page-wide dollar regex: those can be a different wine or variant.
   const normalized = String(rawPrice).trim().replace(/^(?:US\$|\$|USD\s*)/, '').replace(/,/g, '');
   const price = /^\d+(\.\d{1,2})?$/.test(normalized) ? normalized : '';
-  const currency = String(offer.priceCurrency || meta('product:price:currency') || '').toUpperCase();
+  const currency = String(offer.priceCurrency || meta('product:price:currency') || meta('og:price:currency') || '').toUpperCase();
   const availability = /OutOfStock|SoldOut|Discontinued/i.test(offer.availability || '') ? 'out' : /InStock|LimitedAvailability/i.test(offer.availability || '') ? 'in' : 'unknown';
   // The producer, when the shop tags one. Some shops put their own name or an importer here, so the popup checks it against the name.
   const brand = [].concat(product?.brand || product?.manufacturer || [])[0];
